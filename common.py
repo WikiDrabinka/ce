@@ -31,6 +31,7 @@ def evaluate(matrix, solution) -> float:
 
 def plot(solution):
     from sys import argv
+    solution = solution + [solution[0]]
     data = read_file()
     chosen = [data[i] for i in solution]
 
