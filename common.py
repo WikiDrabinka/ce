@@ -32,7 +32,7 @@ def evaluate(matrix, solution) -> float:
 def plot(solution):
     from sys import argv
     data = read_file()
-    chosen = [i for idx, i in enumerate(data) if idx in solution]
+    chosen = [data[i] for i in solution]
 
     x, y, c = zip(*data)
     c = [p/20 for p in c]
