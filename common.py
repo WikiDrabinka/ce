@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 from sys import argv
 
-def read_file() -> (int, int, int):
+def read_file() -> tuple[int, int, int]:
     # x y weight
     res = []
     with open(argv[1]) as file:
@@ -16,15 +16,22 @@ def get_matrix(data):
     res = [[0 for _ in range(len(data))] for _ in range(len(data))]
     for iidx, i in enumerate(data):
         for jidx, j in enumerate(data):
-            res[iidx][jidx] = round(((i[0] - j[0])**2 + (i[1] - j[1])**2)**0.5) + j[2]
+            ## "The distances between nodes are calculated as Euclidean distances rounded **mathematically** to integer values."
+            # Python rounding is messed up, so we are using method mentioned in the labs
+            raw_distance = ((i[0] - j[0])**2 + (i[1] - j[1])**2)**0.5
+            distance_rounded = int(raw_distance + 0.5)
+            res[iidx][jidx] = distance_rounded
+    return res
+
+def get_costs(data):
+    res = [j[2] for j in data]
     return res
 
 
-
-def evaluate(matrix, solution) -> float:
+def evaluate(matrix, costs, solution) -> float:
     # Solution should contain indices of the distance matrix
     from itertools import pairwise
-    cost = 0
+    cost = sum(costs[node] for node in solution)
     for a, b in pairwise([*solution, solution[0]]):
         cost += matrix[a][b]
     return cost

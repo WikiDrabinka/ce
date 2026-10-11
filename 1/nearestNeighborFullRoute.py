@@ -1,41 +1,49 @@
 from random import choice
 from itertools import pairwise
 from time import time
-from ce.common import read_file, get_matrix, plot, evaluate
+from ce.common import read_file, get_matrix, get_costs, plot, evaluate
 from math import ceil
 
 TOTAL_SOLUTIONS = 200
 
 data = read_file()
-data = get_matrix(data)
-to_find = ceil(len(data) / 2)
-indices = [idx for idx, _ in enumerate(data)]
+matrix = get_matrix(data)
+costs = get_costs(matrix)
+to_find = ceil(len(matrix) / 2)
+indices = [idx for idx, _ in enumerate(matrix)]
 
 res = []
 
 run_time = time()
 
+def get_insert_cost(solution, node, idx):
+    if len(solution) == 1 or len(solution) == idx + 1:
+        return matrix[solution[-1]][node] + costs[node]
+    return costs[node] + matrix[solution[idx]][node] + matrix[node][solution[idx+1]] - matrix[solution[idx]][solution[idx+1]]
+
 for _ in range(TOTAL_SOLUTIONS):
     sol = [choice(indices)]
     while len(sol) < to_find:
         possible_next_node = (i for i in indices if i not in sol)
-        best, best_eval = None, 1e100
-        for p in possible_next_node:
-            for insert_idx in range(len(sol)):
-                potential_solution = sol[:insert_idx] + [p] + sol[insert_idx:]
-                local_eval = sum(map(lambda x: data[x[0]][x[1]], pairwise(potential_solution)))
-                if local_eval < best_eval:
-                    best, best_eval = potential_solution, local_eval
-        sol = best
-        print(len(sol))
+        # All inserts after idx
+        possible_inserts = ((i, idx) for i in indices for idx in range(len(sol)) if i not in sol)
+        next = min(possible_inserts, key=lambda x: get_insert_cost(sol, x[0], x[1]))
+        # Insert at the beginning
+        beginning_next = min(possible_next_node, key=lambda x: costs[x] + matrix[x][sol[0]])
+
+        if get_insert_cost(sol, next[0], next[1]) < costs[beginning_next] + matrix[beginning_next][sol[0]]:
+            sol.insert(next[1] + 1, next[0])
+        else:
+            sol.insert(0, beginning_next)
+
     res.append(sol)
 
 run_time = time() - run_time
 
-scores = [evaluate(data, f) for f in res]
+scores = [evaluate(matrix, costs, f) for f in res]
 
 print(f'Min: {min(scores)}\nAvg: {sum(scores)/len(scores)}\nMax: {max(scores)}')
-best_sol = min(res, key=lambda x: evaluate(data, x))
+best_sol = min(res, key=lambda x: evaluate(matrix, costs, x))
 print('Best solution:', best_sol)
 print(f'Run time {round(run_time * 1000, 2)}ms')
 
