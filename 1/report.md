@@ -41,9 +41,11 @@ to_find = ⌈len(matrix) / 2⌉
 indices = [i for i∊ℕ and i<len(matrix)]
 
 function get_insert_cost(solution, node, idx):
-    if len(solution) == 1 or len(solution) == idx + 1:
+    if idx == 0:
+        return matrix[node][solution[0]] + costs[node]
+    if len(solution) == idx:
         return matrix[solution[-1]][node] + costs[node]
-    return costs[node] + matrix[solution[idx]][node] + matrix[node][solution[idx+1]] - matrix[solution[idx]][solution[idx+1]]
+    return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
 
 solution = [random.choice(indices)]
 while len(solution) < to_find:
@@ -71,23 +73,15 @@ to_find = ⌈len(matrix) / 2⌉
 indices = [i for i∊ℕ and i<len(matrix)]
 
 function get_insert_cost(solution, node, idx):
-    if len(solution) == 1 or len(solution) == idx + 1:
-        return matrix[solution[-1]][node] + matrix[node][solution[0]] + costs[node]
-    return costs[node] + matrix[solution[idx]][node] + matrix[node][solution[idx+1]] - matrix[solution[idx]][solution[idx+1]]
+    if idx == 0 or len(solution) == idx:
+        return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]] 
+    return costs[node] + matrix[solution[idx - 1]][node] + matrix[node][solution[idx]] - matrix[solution[idx - 1]][solution[idx]]
 
 solution = [random.choice(indices)]
 while len(solution) < to_find:
-    possible_next_node = indices\solution
-    possible_inserts = [(node, index) for node in indices for index∊ℕ and index<len(solution) and index∉solution]
-    # All inserts after idx
+    possible_inserts = [(node, index) for node in indices for index∊ℕ and index<=len(solution) and index∉solution]
     next = argmin[x∊possible_inserts](get_insert_costs(solution, x[0], x[1]))
-    # Insert at the beginning
-    beginning_next = argmin[x∊possible_next_node](cost[x] + matrix[x][solution[0]] +  matrix[solution[-1]][x])
-    
-    if get_insert_cost(solution, next[0], next[1]) < costs[beginning_next] + matrix[beginning_next][solution[0]] matrix[solution[-1]][beginning_next]:
-            solution.insert(next[1] + 1, next[0])
-        else:
-            solution.insert(0, beginning_next)
+    solution.insert(next[1], next[0])
 ```
 
 
@@ -96,15 +90,15 @@ while len(solution) < to_find:
 |  | Random solutions | Nearest neighbor | Nearest neighbor (all positions) | Greedy cycle |
 | --- | --- | --- | --- | --- |
 | **Instance A** |
-| Min | 225267 | 84362 | 107908 | 108734 |
-| Avg | 261519.96 | 87457.88 | 109954.945 | 112436.94 |
-| Max | 290575 | 89933 | 113841 | 129808 |
-| *Execution time* | 2.93ms | 947.68ms | 76415.7ms | 74736.5ms |
+| Min | 225267 | 84362 | 72328 | 72590 |
+| Avg | 261519.96 | 87457.88 | 74322.08 | 73781.12 |
+| Max | 290575 | 89933 | 77022 | 75281 |
+| *Execution time* | 2.93ms | 947.68ms | 151516.94ms | 141700.29ms |
 | **Instance B** |
-| Min | 178305 | 56007 | 135098 | 135631 |
-| Avg | 207024.785 | 59485.015 | 138160.42 | 139849.3 |
-| Max | 231261 | 63166 | 142466 | 163788 |
-| *Execution time* | 3.09ms | 949.7ms | 76687.14ms | 102721.43ms |
+| Min | 178305 | 56007 | 54139 | 55655 |
+| Avg | 207024.785 | 59485.015 | 59401.325 | 59135.765 |
+| Max | 231261 | 63166 | 64061 | 63734 |
+| *Execution time* | 3.09ms | 949.7ms | 162898.49ms | 158964.65ms |
 
 ## Instance A
 
@@ -119,6 +113,8 @@ Max: 290575
 Best solution: [12, 141, 90, 162, 44, 148, 7, 93, 79, 107, 116, 58, 136, 181, 23, 130, 78, 13, 129, 112, 110, 141, 66, 160, 184, 140, 22, 106, 123, 71, 76, 7, 34, 124, 187, 145, 72, 78, 156, 156, 30, 186, 84, 141, 152, 9, 62, 51, 92, 157, 183, 132, 196, 84, 23, 112, 120, 97, 175, 137, 13, 4, 185, 27, 192, 64, 153, 32, 192, 178, 0, 26, 140, 84, 58, 86, 80, 115, 165, 109, 184, 48, 65, 88, 3, 26, 8, 87, 191, 52, 197, 178, 6, 101, 180, 144, 160, 156, 84, 72]
 
 ![random](./images/randomA.png)
+
+(*In all images, the color represents node cost*)
 
 Run time: 2.93ms
 
@@ -138,31 +134,31 @@ Run time 947.68ms
 
 ### Nearest neighbor considering adding the node at all possible position
 
-Min: 107908
+Min: 72328
 
-Avg: 109954.945
+Avg: 74322.08
 
-Max: 113841
+Max: 77022
 
-Best solution: [157, 71, 4, 76, 132, 162, 68, 44, 14, 38, 80, 66, 108, 82, 60, 167, 116, 149, 63, 168, 119, 11, 49, 152, 100, 90, 148, 83, 123, 160, 12, 161, 125, 97, 95, 127, 120, 188, 129, 104, 69, 94, 110, 92, 32, 171, 2, 198, 166, 183, 10, 22, 25, 114, 118, 181, 135, 121, 61, 73, 41, 84, 99, 131, 36, 177, 74, 52, 179, 53, 140, 45, 98, 70, 96, 27, 87, 189, 40, 187, 30, 23, 141, 145, 191, 180, 28, 102, 185, 144, 67, 35, 156, 172, 16, 51, 133, 173, 196, 18]
+Best solution: [104, 129, 69, 127, 97, 168, 116, 149, 63, 11, 49, 160, 83, 123, 100, 152, 108, 60, 31, 48, 80, 91, 157, 71, 4, 76, 132, 180, 28, 102, 185, 35, 156, 51, 16, 67, 144, 140, 53, 179, 52, 177, 36, 33, 9, 54, 131, 174, 8, 164, 186, 136, 163, 29, 101, 178, 1, 169, 3, 50, 147, 47, 93, 106, 42, 89, 113, 130, 159, 146, 170, 153, 193, 78, 88, 107, 64, 57, 182, 151, 150, 176, 72, 134, 84, 58, 158, 192, 181, 114, 135, 73, 45, 87, 141, 187, 30, 189, 2, 171]
 
 ![nnfull](./images/nnfullA.png)
 
-Run time 76415.7ms
+Run time 151516.94ms
 
 ### Greedy cycle
 
-Min: 108734
+Min: 72590
 
-Avg: 112436.94
+Avg: 73781.12
 
-Max: 129808
+Max: 75281
 
-Best solution: [14, 100, 152, 66, 108, 82, 60, 167, 116, 149, 63, 168, 119, 11, 49, 123, 83, 160, 12, 97, 95, 127, 188, 129, 104, 69, 94, 110, 120, 161, 125, 198, 92, 32, 171, 2, 166, 183, 10, 96, 27, 22, 25, 114, 118, 181, 135, 61, 73, 121, 98, 70, 87, 45, 185, 140, 41, 53, 179, 177, 99, 131, 36, 74, 52, 144, 67, 16, 51, 133, 139, 18, 173, 196, 35, 172, 156, 102, 28, 180, 191, 141, 145, 189, 40, 187, 30, 23, 162, 148, 90, 68, 44, 132, 76, 4, 71, 157, 91, 38]
+Best solution: [80, 91, 157, 71, 4, 76, 132, 180, 28, 102, 185, 35, 156, 51, 16, 67, 144, 140, 53, 179, 52, 177, 36, 33, 9, 54, 131, 174, 8, 142, 164, 186, 136, 163, 29, 101, 178, 1, 169, 3, 50, 147, 47, 93, 106, 42, 89, 113, 130, 159, 146, 170, 153, 193, 78, 88, 107, 64, 57, 182, 151, 150, 176, 72, 134, 84, 58, 158, 192, 181, 114, 135, 73, 45, 87, 141, 187, 30, 189, 2, 171, 69, 127, 97, 160, 83, 123, 90, 100, 152, 108, 60, 49, 11, 63, 168, 149, 116, 31, 48]
 
 ![greedycycle](./images/greedycycleA.png)
 
-Run time 74736.5ms
+Run time 141700.29ms
 
 ## Instance B
 
@@ -196,34 +192,38 @@ Run time 949.7ms
 
 ### Nearest neighbor considering adding the node at all possible position
 
-Min: 135098
-Avg: 138160.42
-Max: 142466
-Best solution: [131, 56, 118, 68, 100, 110, 112, 23, 93, 9, 188, 2, 14, 20, 74, 17, 171, 39, 99, 163, 88, 87, 82, 179, 126, 181, 152, 167, 51, 85, 101, 107, 59, 73, 25, 34, 24, 11, 98, 151, 22, 111, 122, 173, 109, 137, 184, 3, 27, 35, 31, 67, 66, 119, 84, 186, 153, 182, 150, 52, 129, 90, 80, 127, 106, 192, 162, 76, 135, 75, 0, 79, 185, 144, 104, 77, 159, 54, 78, 41, 10, 143, 148, 114, 196, 12, 18, 187, 194, 190, 70, 199, 165, 169, 81, 94, 105, 139, 61, 193]
+Min: 54139
+
+Avg: 59401.325
+
+Max: 64061
+
+Best solution: [121, 198, 96, 48, 43, 156, 89, 57, 104, 54, 90, 14, 2, 74, 20, 153, 182, 52, 129, 127, 80, 192, 162, 185, 76, 135, 27, 111, 98, 151, 122, 173, 3, 184, 86, 46, 72, 117, 8, 120, 133, 136, 172, 160, 69, 168, 189, 21, 183, 130, 191, 30, 176, 38, 47, 140, 154, 97, 26, 125, 177, 170, 115, 180, 6, 103, 178, 132, 29, 197, 36, 62, 175, 134, 45, 157, 141, 155, 71, 60, 40, 33, 64, 85, 59, 73, 51, 167, 181, 152, 34, 24, 11, 66, 67, 31, 88, 179, 87, 82]
 
 ![nnfull](./images/nnfullB.png)
 
-Run time 76687.14ms
+Run time 162898.49ms
 
 ### Greedy cycle
 
-Min: 135631
+Min: 55655
 
-Avg: 139849.3
+Avg: 59135.765
 
-Max: 163788
+Max: 63734
 
-Best solution: [143, 148, 114, 196, 193, 61, 139, 105, 94, 81, 169, 165, 199, 70, 190, 194, 187, 18, 12, 41, 78, 54, 159, 77, 104, 144, 185, 79, 0, 75, 135, 76, 162, 192, 106, 127, 80, 129, 52, 150, 182, 20, 74, 186, 84, 119, 66, 67, 31, 35, 27, 3, 184, 137, 109, 173, 122, 111, 22, 151, 98, 11, 24, 34, 25, 73, 59, 107, 101, 85, 51, 167, 152, 181, 126, 179, 82, 87, 88, 163, 99, 39, 171, 17, 188, 2, 9, 93, 23, 112, 110, 100, 68, 118, 131, 56, 14, 153, 90, 10]
+Best solution: [36, 197, 6, 180, 115, 170, 97, 140, 47, 155, 71, 175, 134, 45, 157, 60, 141, 40, 33, 64, 21, 189, 168, 69, 160, 172, 136, 133, 120, 8, 117, 72, 46, 86, 184, 3, 173, 122, 151, 98, 111, 27, 135, 76, 185, 162, 192, 80, 52, 182, 20, 74, 2, 93, 110, 118, 14, 153, 90, 129, 127, 54, 104, 57, 89, 156, 43, 48, 96, 198, 121, 63, 130, 191, 183, 30, 176, 38, 154, 26, 125, 177, 138, 158, 145, 149, 147, 42, 116, 37, 146, 13, 28, 65, 178, 103, 29, 132, 1, 174]
 
 ![greedycycle](./images/greedycycleB.png)
 
-Run time 102721.43ms
-
+Run time 158964.65ms
 
 ## Conclusions
 
-Out of the three algorithms, regular nearest neighbor finds solutions the fastest and it seems to find the best solutions.
+Out of the three algorithms, regular Nearest Neighbor finds good solutions the quickest, but Nearest Neighbor considering all positions and Greedy Cycle beat it by the quality of solutions, while suffering in execution time. In both instances, Greedy Cycle finds a slightly worse best solution than Nearest Neighbor considering all positions, but it finds better solutions on average.
 
+
+*All solutions have been verified with the solution checker*
 
 ## Source code
 
