@@ -3,8 +3,6 @@ from time import time
 from ce.common import read_file, get_matrix, get_costs, plot, evaluate
 from math import ceil
 
-TOTAL_SOLUTIONS = 200
-
 data = read_file()
 matrix = get_matrix(data)
 costs = get_costs(data)
@@ -15,8 +13,8 @@ res = []
 
 run_time = time()
 
-for _ in range(TOTAL_SOLUTIONS):
-    sol = [choice(indices)]
+for start_idx in indices:
+    sol = [start_idx]
     while len(sol) < to_find:
         possible_next = (i for i in indices if i not in sol)
         next = min(possible_next, key=lambda x: matrix[sol[-1]][x] + costs[x])
