@@ -1,6 +1,6 @@
 from random import choice
 from time import time
-from ce.common import read_file, get_matrix, get_costs, plot, evaluate
+from py.common import read_file, get_matrix, get_costs, plot, evaluate
 from math import ceil
 
 data = read_file()

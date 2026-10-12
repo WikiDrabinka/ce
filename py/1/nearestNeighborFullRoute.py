@@ -1,7 +1,7 @@
 from random import choice
 from itertools import pairwise
 from time import time
-from ce.common import read_file, get_matrix, get_costs, plot, evaluate
+from py.common import read_file, get_matrix, get_costs, plot, evaluate
 from math import ceil
 
 data = read_file()
