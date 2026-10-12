@@ -49,17 +49,9 @@ function get_insert_cost(solution, node, idx):
 
 solution = [random.choice(indices)]
 while len(solution) < to_find:
-    possible_next_node = indices\solution
-    possible_inserts = [(node, index) for node in indices for index∊ℕ and index<len(solution) and index∉solution]
-    # All inserts after idx
+    possible_inserts = [(node, index) for node in indices for index∊ℕ and index<=len(solution) and index∉solution]
     next = argmin[x∊possible_inserts](get_insert_costs(solution, x[0], x[1]))
-    # Insert at the beginning
-    beginning_next = argmin[x∊possible_next_node](cost[x] + matrix[x][solution[0]])
-    
-    if get_insert_cost(solution, next[0], next[1]) < costs[beginning_next] + matrix[beginning_next][solution[0]]:
-            solution.insert(next[1] + 1, next[0])
-        else:
-            solution.insert(0, beginning_next)
+    solution.insert(next[1], next[0])
 ```
 
 ### Greedy cycle
