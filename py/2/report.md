@@ -21,34 +21,154 @@ Each implementation is evaluated on every requested instance. The summary statis
 
 ### Greedy Cycle (2-Regret)
 
-TODO !!
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
+
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
+
+function get_insert_cost(solution, node, idx):
+	if idx == 0 or idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
+
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			candidates.append((regret, -best_cost, node, best_idx))
+	selected = max(candidates, key=lambda x: (x[0], x[1]))
+	solution.insert(selected[3], selected[2])
+
+return solution
+```
 
 ### Greedy Cycle (Weighted)
 
-TODO !!
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
+
+WEIGHT = 0.5
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
+
+function get_insert_cost(solution, node, idx):
+	if idx == 0 or idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
+
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			score = WEIGHT * regret - (1 - WEIGHT) * best_cost
+			candidates.append((score, node, best_idx))
+	selected = max(candidates, key=lambda x: x[0])
+	solution.insert(selected[2], selected[1])
+
+return solution
+```
 
 ### Nearest Neighbor Full Route (2-Regret)
 
-TODO !!
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
+
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
+
+function get_insert_cost(solution, node, idx):
+	if idx == 0:
+		return matrix[node][solution[0]] + costs[node]
+	if idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
+
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			candidates.append((regret, -best_cost, node, best_idx))
+	selected = max(candidates, key=lambda x: (x[0], x[1]))
+	solution.insert(selected[3], selected[2])
+
+return solution
+```
 
 ### Nearest Neighbor Full Route (Weighted)
 
-TODO !!
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
+
+WEIGHT = 0.5
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
+
+function get_insert_cost(solution, node, idx):
+	if idx == 0:
+		return matrix[node][solution[0]] + costs[node]
+	if idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
+
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			score = WEIGHT * regret - (1 - WEIGHT) * best_cost
+			candidates.append((score, node, best_idx))
+	selected = max(candidates, key=lambda x: x[0])
+	solution.insert(selected[2], selected[1])
+
+return solution
+```
 
 ## Results
 
-| | Greedy Cycle (2-Regret) | Greedy Cycle (Weighted) | Nearest Neighbor Full Route (2-Regret) | Nearest Neighbor Full Route (Weighted) |
-| --- | --- | --- | --- | --- |
-| **TSPA.csv** |
-| Min | 111748 | 72011 | 110950 | 72419 |
-| Avg | 120502.05 | 73339.43 | 121360.29 | 75542.49 |
-| Max | 129972 | 76027 | 135771 | 78504 |
-| Execution time | 30716.49ms | 30881.79ms | 31569.18ms | 31967.62ms |
-| **TSPB.csv** |
-| Min | 66167 | 52860 | 68761 | 50485 |
-| Avg | 72327.22 | 57902.08 | 73649.84 | 55694.15 |
-| Max | 77274 | 63406 | 79756 | 61406 |
-| Execution time | 32714.95ms | 51646.35ms | 31474.27ms | 30920.19ms |
+| | Greedy Cycle | Nearest Neighbor | Nearest Neighbor (all positions) | Greedy Cycle (2-Regret) | Greedy Cycle (Weighted) | Nearest Neighbor Full Route (2-Regret) | Nearest Neighbor Full Route (Weighted) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **Instance A** |
+| Min | 72590 | 84362 | 72328 | 111748 | **72011** | 110950 | 72419 |
+| Avg | 73793.4 | 87476.63 | 74346.96 | 120502.05 | **73339.43** | 121360.29 | 75542.49 |
+| Max | **75281** | 90075 | 77022 | 129972 | 76027 | 135771 | 78504 |
+| Execution time | 172239.77ms | 2377.9ms | 190031.79ms | 30716.49ms | 30881.79ms | 31569.18ms | 31967.62ms |
+| **Instance B** |
+| Min | 55655 | 56007 | 52915 | 66167 | 52860 | 68761 | **50485** |
+| Avg | 59649.91 | 59397.33 | 59475.5 | 72327.22 | 57902.08 | 73649.84 | **55694.15** |
+| Max | 63734 | 63166 | 66164 | 77274 | 63406 | 79756 | **61406** |
+| Execution time | 165464.06ms | 2384.79ms | 170881.14ms | 32714.95ms | 51646.35ms | 31474.27ms | 30920.19ms |
 
 ## TSPA.csv
 
