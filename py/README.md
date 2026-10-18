@@ -1,11 +1,19 @@
 # How to run
-From the folder *above* the package (that is, from the project root folder):
+From the ***py*** folder
 
 ```
-py -m py.1.random
+py -m 1.random
 ```
 Or, in other words, `py -m ce.[lab number].[filename]`
 
 Arguments, in order:
 - data file 
 - optional image export filename
+
+# Report generation 
+
+From project root:
+
+```
+py py/report.py [lab number] [...instance files]
+```

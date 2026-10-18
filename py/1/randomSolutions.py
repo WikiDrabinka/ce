@@ -1,4 +1,4 @@
-from py.common import read_file, evaluate, get_matrix, get_costs, plot
+from common import read_file, evaluate, get_matrix, get_costs, plot
 import random as rnd
 from math import ceil
 from time import time

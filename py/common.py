@@ -3,10 +3,10 @@
 import matplotlib.pyplot as plt
 from sys import argv
 
-def read_file() -> tuple[int, int, int]:
+def read_file(file_path: str = None) -> tuple[int, int, int]:
     # x y weight
     res = []
-    with open(argv[1]) as file:
+    with open(file_path or argv[1]) as file:
         for row in file:
             res.append(tuple(map(int, row.strip().split(';'))))
     return res
@@ -36,21 +36,27 @@ def evaluate(matrix, costs, solution) -> float:
         cost += matrix[a][b]
     return cost
 
-def plot(solution):
+def plot(solution, file_path: str = None, output_path: str = None):
     from sys import argv
     solution = solution + [solution[0]]
-    data = read_file()
+    data = read_file(file_path)
     chosen = [data[i] for i in solution]
+    figure = plt.figure()
 
     x, y, c = zip(*data)
-    c = [p/20 for p in c]
+    c = [p for p in c]
     plt.scatter(x, y, c=c, cmap='coolwarm', zorder=2)
 
     x, y, _ = zip(*chosen)
     plt.plot(x, y, color='gray', linewidth=1, zorder=1)
 
     plt.colorbar()
-    if len(argv) < 3:
+    save_path = output_path
+    if save_path is None and len(argv) >= 3:
+        save_path = argv[2]
+
+    if save_path is None:
         plt.show()
     else:
-        plt.savefig(argv[2], dpi=300)
+        plt.savefig(save_path, dpi=300)
+    plt.close(figure)
