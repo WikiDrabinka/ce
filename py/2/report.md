@@ -290,7 +290,10 @@ Execution time: 30920.19ms
 
 ## Conclusions
 
-TODO !!
+- Weighted heuristics outperform standard 2-regret across both instances, consistently achieving lower minimum, average, and maximum solution costs.
+- Greedy Cycle with the weighted heuristic performs best on Instance A
+- Nearest Neighbor Full Route with the weighted heuristic performs best on Instance B
+- Standard 2-regret performs considerably worse on both instances, indicating that regret-based insertion 
 
 *All solutions have been verified with the solution checker*
 
