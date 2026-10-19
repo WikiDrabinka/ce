@@ -19,72 +19,6 @@ instances defined only by distance matrices.
 
 Each implementation is evaluated on every requested instance. The summary statistics below cover all candidate solutions returned by that implementation.
 
-### Greedy Cycle (2-Regret)
-
-```
-Input:
-matrix - matrix of distances between nodes
-costs - array of node costs
-start - index of the initial node
-
-to_find = ceil(len(matrix) / 2)
-indices = [i for i∊ℕ and i<len(matrix)]
-
-function get_insert_cost(solution, node, idx):
-	if idx == 0 or idx == len(solution):
-		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
-	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
-
-solution = [start]
-while len(solution) < to_find:
-	candidates = []
-	for node in indices:
-		if node not in solution:
-			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
-			best_cost, best_idx = insertions[0]
-			second_best_cost = insertions[1][0]
-			regret = second_best_cost - best_cost
-			candidates.append((regret, -best_cost, node, best_idx))
-	selected = max(candidates, key=lambda x: (x[0], x[1]))
-	solution.insert(selected[3], selected[2])
-
-return solution
-```
-
-### Greedy Cycle (Weighted)
-
-```
-Input:
-matrix - matrix of distances between nodes
-costs - array of node costs
-start - index of the initial node
-
-WEIGHT = 0.5
-to_find = ceil(len(matrix) / 2)
-indices = [i for i∊ℕ and i<len(matrix)]
-
-function get_insert_cost(solution, node, idx):
-	if idx == 0 or idx == len(solution):
-		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
-	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
-
-solution = [start]
-while len(solution) < to_find:
-	candidates = []
-	for node in indices:
-		if node not in solution:
-			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
-			best_cost, best_idx = insertions[0]
-			second_best_cost = insertions[1][0]
-			regret = second_best_cost - best_cost
-			score = WEIGHT * regret - (1 - WEIGHT) * best_cost
-			candidates.append((score, node, best_idx))
-	selected = max(candidates, key=lambda x: x[0])
-	solution.insert(selected[2], selected[1])
-
-return solution
-```
-
 ### Nearest Neighbor Full Route (2-Regret)
 
 ```
@@ -155,50 +89,88 @@ while len(solution) < to_find:
 return solution
 ```
 
-## Results
-
-| | Greedy Cycle | Nearest Neighbor | Nearest Neighbor (all positions) | Greedy Cycle (2-Regret) | Greedy Cycle (Weighted) | Nearest Neighbor Full Route (2-Regret) | Nearest Neighbor Full Route (Weighted) |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **Instance A** |
-| Min | 72590 | 84362 | 72328 | 111748 | **72011** | 110950 | 72419 |
-| Avg | 73793.4 | 87476.63 | 74346.96 | 120502.05 | **73339.43** | 121360.29 | 75542.49 |
-| Max | **75281** | 90075 | 77022 | 129972 | 76027 | 135771 | 78504 |
-| Execution time | 172239.77ms | 2377.9ms | 190031.79ms | 30716.49ms | 30881.79ms | 31569.18ms | 31967.62ms |
-| **Instance B** |
-| Min | 55655 | 56007 | 52915 | 66167 | 52860 | 68761 | **50485** |
-| Avg | 59649.91 | 59397.33 | 59475.5 | 72327.22 | 57902.08 | 73649.84 | **55694.15** |
-| Max | 63734 | 63166 | 66164 | 77274 | 63406 | 79756 | **61406** |
-| Execution time | 165464.06ms | 2384.79ms | 170881.14ms | 32714.95ms | 51646.35ms | 31474.27ms | 30920.19ms |
-
-## TSPA.csv
-
 ### Greedy Cycle (2-Regret)
 
-Min: 111748
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
 
-Avg: 120502.05
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
 
-Max: 129972
+function get_insert_cost(solution, node, idx):
+	if idx == 0 or idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
 
-Best solution: `[187, 30, 23, 162, 90, 123, 152, 108, 11, 97, 120, 110, 129, 168, 116, 82, 77, 199, 48, 126, 137, 80, 38, 91, 157, 4, 196, 51, 133, 139, 112, 5, 115, 175, 39, 154, 62, 34, 109, 186, 136, 197, 163, 19, 29, 17, 55, 86, 155, 21, 147, 47, 159, 130, 117, 93, 50, 1, 128, 164, 194, 174, 81, 43, 113, 89, 124, 107, 75, 26, 78, 88, 64, 57, 105, 182, 138, 111, 192, 58, 135, 73, 41, 99, 177, 52, 144, 45, 185, 102, 87, 96, 98, 114, 22, 10, 183, 166, 2, 171]`
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			candidates.append((regret, -best_cost, node, best_idx))
+	selected = max(candidates, key=lambda x: (x[0], x[1]))
+	solution.insert(selected[3], selected[2])
 
-![Greedy Cycle (2-Regret)](./images/TSPA_greedyCycle_2r.png)
-
-Execution time: 30716.49ms
+return solution
+```
 
 ### Greedy Cycle (Weighted)
 
-Min: 72011
+```
+Input:
+matrix - matrix of distances between nodes
+costs - array of node costs
+start - index of the initial node
 
-Avg: 73339.43
+WEIGHT = 0.5
+to_find = ceil(len(matrix) / 2)
+indices = [i for i∊ℕ and i<len(matrix)]
 
-Max: 76027
+function get_insert_cost(solution, node, idx):
+	if idx == 0 or idx == len(solution):
+		return matrix[solution[-1]][node] + costs[node] + matrix[node][solution[0]] - matrix[solution[-1]][solution[0]]
+	return costs[node] + matrix[solution[idx-1]][node] + matrix[node][solution[idx]] - matrix[solution[idx-1]][solution[idx]]
 
-Best solution: `[60, 116, 149, 63, 168, 11, 49, 108, 152, 100, 123, 83, 160, 97, 127, 161, 30, 187, 171, 2, 189, 141, 87, 45, 73, 135, 114, 181, 192, 158, 58, 84, 134, 72, 176, 174, 150, 106, 113, 89, 42, 151, 138, 182, 57, 64, 107, 88, 78, 193, 153, 75, 170, 146, 159, 130, 47, 93, 50, 3, 169, 1, 178, 101, 55, 29, 163, 136, 186, 164, 142, 8, 9, 54, 33, 131, 36, 177, 52, 179, 53, 140, 144, 67, 16, 51, 35, 185, 102, 28, 180, 132, 76, 4, 71, 157, 91, 80, 48, 31]`
+solution = [start]
+while len(solution) < to_find:
+	candidates = []
+	for node in indices:
+		if node not in solution:
+			insertions = sorted([(get_insert_cost(solution, node, idx), idx) for idx in range(len(solution) + 1)])
+			best_cost, best_idx = insertions[0]
+			second_best_cost = insertions[1][0]
+			regret = second_best_cost - best_cost
+			score = WEIGHT * regret - (1 - WEIGHT) * best_cost
+			candidates.append((score, node, best_idx))
+	selected = max(candidates, key=lambda x: x[0])
+	solution.insert(selected[2], selected[1])
 
-![Greedy Cycle (Weighted)](./images/TSPA_greedyCycle_weighted.png)
+return solution
+```
 
-Execution time: 30881.79ms
+## Results
+
+| | Nearest Neighbor | Nearest Neighbor (all positions) | Nearest Neighbor Full Route (2-Regret) | Nearest Neighbor Full Route (Weighted) | Greedy Cycle | Greedy Cycle (2-Regret) | Greedy Cycle (Weighted) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **Instance A** |
+| Min | 84362 | 72328 | 110950 | 72419 | 72590 | 111748 | **72011** |
+| Avg | 87476.63 | 74346.96 | 121360.29 | 75542.49 | 73793.4 | 120502.05 | **73339.43** |
+| Max | 90075 | 77022 | 135771 | 78504 | **75281** | 129972 | 76027 |
+| Execution time | 2377.9ms | 190031.79ms | 31569.18ms | 31967.62ms | 172239.77ms | 30716.49ms | 30881.79ms |
+| **Instance B** |
+| Min | 56007 | 52915 | 68761 | **50485** | 55655 | 66167 | 52860 |
+| Avg | 59397.33 | 59475.5 | 73649.84 | **55694.15** | 59649.91 | 72327.22 | 57902.08 |
+| Max | 63166 | 66164 | 79756 | **61406** | 63734 | 77274 | 63406 |
+| Execution time | 2384.79ms | 170881.14ms | 31474.27ms | 30920.19ms | 165464.06ms | 32714.95ms | 51646.35ms |
+
+## Instance A
 
 ### Nearest Neighbor Full Route (2-Regret)
 
@@ -229,35 +201,35 @@ Best solution: `[171, 2, 189, 187, 30, 141, 87, 45, 73, 135, 114, 181, 192, 158,
 Execution time: 31967.62ms
 
 
-## TSPB.csv
-
 ### Greedy Cycle (2-Regret)
 
-Min: 66167
+Min: 111748
 
-Avg: 72327.22
+Avg: 120502.05
 
-Max: 77274
+Max: 129972
 
-Best solution: `[196, 114, 148, 143, 131, 118, 68, 110, 23, 93, 9, 188, 14, 20, 74, 17, 171, 39, 99, 163, 88, 82, 126, 152, 167, 51, 85, 107, 49, 33, 47, 140, 154, 161, 26, 125, 170, 97, 155, 141, 60, 157, 45, 134, 175, 62, 91, 36, 197, 5, 6, 102, 103, 178, 65, 145, 28, 149, 13, 37, 116, 42, 195, 130, 30, 21, 168, 69, 172, 133, 120, 63, 198, 58, 48, 156, 166, 72, 46, 109, 184, 173, 151, 111, 27, 135, 0, 79, 185, 144, 162, 192, 106, 84, 150, 80, 52, 90, 78, 41]`
+Best solution: `[187, 30, 23, 162, 90, 123, 152, 108, 11, 97, 120, 110, 129, 168, 116, 82, 77, 199, 48, 126, 137, 80, 38, 91, 157, 4, 196, 51, 133, 139, 112, 5, 115, 175, 39, 154, 62, 34, 109, 186, 136, 197, 163, 19, 29, 17, 55, 86, 155, 21, 147, 47, 159, 130, 117, 93, 50, 1, 128, 164, 194, 174, 81, 43, 113, 89, 124, 107, 75, 26, 78, 88, 64, 57, 105, 182, 138, 111, 192, 58, 135, 73, 41, 99, 177, 52, 144, 45, 185, 102, 87, 96, 98, 114, 22, 10, 183, 166, 2, 171]`
 
-![Greedy Cycle (2-Regret)](./images/TSPB_greedyCycle_2r.png)
+![Greedy Cycle (2-Regret)](./images/TSPA_greedyCycle_2r.png)
 
-Execution time: 32714.95ms
+Execution time: 30716.49ms
 
 ### Greedy Cycle (Weighted)
 
-Min: 52860
+Min: 72011
 
-Avg: 57902.08
+Avg: 73339.43
 
-Max: 63406
+Max: 76027
 
-Best solution: `[197, 29, 132, 6, 19, 177, 125, 26, 154, 140, 47, 38, 21, 30, 183, 191, 130, 63, 121, 198, 96, 48, 43, 156, 32, 89, 57, 79, 185, 104, 54, 196, 114, 10, 90, 14, 2, 74, 20, 153, 129, 127, 80, 192, 162, 76, 135, 27, 11, 66, 67, 24, 34, 152, 181, 126, 88, 179, 87, 82, 167, 51, 85, 59, 73, 98, 151, 122, 173, 3, 184, 86, 46, 72, 117, 8, 120, 133, 136, 172, 160, 69, 124, 4, 64, 33, 40, 141, 60, 157, 45, 134, 175, 71, 155, 97, 170, 115, 180, 5]`
+Best solution: `[60, 116, 149, 63, 168, 11, 49, 108, 152, 100, 123, 83, 160, 97, 127, 161, 30, 187, 171, 2, 189, 141, 87, 45, 73, 135, 114, 181, 192, 158, 58, 84, 134, 72, 176, 174, 150, 106, 113, 89, 42, 151, 138, 182, 57, 64, 107, 88, 78, 193, 153, 75, 170, 146, 159, 130, 47, 93, 50, 3, 169, 1, 178, 101, 55, 29, 163, 136, 186, 164, 142, 8, 9, 54, 33, 131, 36, 177, 52, 179, 53, 140, 144, 67, 16, 51, 35, 185, 102, 28, 180, 132, 76, 4, 71, 157, 91, 80, 48, 31]`
 
-![Greedy Cycle (Weighted)](./images/TSPB_greedyCycle_weighted.png)
+![Greedy Cycle (Weighted)](./images/TSPA_greedyCycle_weighted.png)
 
-Execution time: 51646.35ms
+Execution time: 30881.79ms
+
+## Instance B
 
 ### Nearest Neighbor Full Route (2-Regret)
 
@@ -287,6 +259,34 @@ Best solution: `[65, 145, 28, 149, 13, 146, 37, 116, 147, 42, 50, 130, 63, 121, 
 
 Execution time: 30920.19ms
 
+
+### Greedy Cycle (2-Regret)
+
+Min: 66167
+
+Avg: 72327.22
+
+Max: 77274
+
+Best solution: `[196, 114, 148, 143, 131, 118, 68, 110, 23, 93, 9, 188, 14, 20, 74, 17, 171, 39, 99, 163, 88, 82, 126, 152, 167, 51, 85, 107, 49, 33, 47, 140, 154, 161, 26, 125, 170, 97, 155, 141, 60, 157, 45, 134, 175, 62, 91, 36, 197, 5, 6, 102, 103, 178, 65, 145, 28, 149, 13, 37, 116, 42, 195, 130, 30, 21, 168, 69, 172, 133, 120, 63, 198, 58, 48, 156, 166, 72, 46, 109, 184, 173, 151, 111, 27, 135, 0, 79, 185, 144, 162, 192, 106, 84, 150, 80, 52, 90, 78, 41]`
+
+![Greedy Cycle (2-Regret)](./images/TSPB_greedyCycle_2r.png)
+
+Execution time: 32714.95ms
+
+### Greedy Cycle (Weighted)
+
+Min: 52860
+
+Avg: 57902.08
+
+Max: 63406
+
+Best solution: `[197, 29, 132, 6, 19, 177, 125, 26, 154, 140, 47, 38, 21, 30, 183, 191, 130, 63, 121, 198, 96, 48, 43, 156, 32, 89, 57, 79, 185, 104, 54, 196, 114, 10, 90, 14, 2, 74, 20, 153, 129, 127, 80, 192, 162, 76, 135, 27, 11, 66, 67, 24, 34, 152, 181, 126, 88, 179, 87, 82, 167, 51, 85, 59, 73, 98, 151, 122, 173, 3, 184, 86, 46, 72, 117, 8, 120, 133, 136, 172, 160, 69, 124, 4, 64, 33, 40, 141, 60, 157, 45, 134, 175, 71, 155, 97, 170, 115, 180, 5]`
+
+![Greedy Cycle (Weighted)](./images/TSPB_greedyCycle_weighted.png)
+
+Execution time: 51646.35ms
 
 ## Conclusions
 
