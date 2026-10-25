@@ -1,4 +1,5 @@
-from py.common import read_file, get_costs, get_matrix
+from pathlib import Path
+from py.common import read_file, get_costs, get_matrix, plot
 from .nnfr_2r import find
 
 from random import sample, shuffle
@@ -111,6 +112,10 @@ def get_greedy_sol(matrix, costs, start_idx):
 
 
 def run_experiments(runs=200):
+    dataset_path = Path(argv[1])
+    image_dir = Path(__file__).with_name("images")
+    image_dir.mkdir(exist_ok=True)
+
     configurations = [
         (strategy, move_type, start_type)
         for strategy in ("steepest", "greedy")
@@ -163,6 +168,12 @@ def run_experiments(runs=200):
         print(f" - Average run time: {avg_time:.4f}s")
         print(f" - Maximum run time: {max_time:.4f}s")
         print(f" - Best route: {best_route}")
+
+        image_path = image_dir / (
+            f"{dataset_path.stem}_{strategy}_{move_type}_{start_type}.png"
+        )
+        plot(best_route, str(dataset_path), str(image_path))
+        print(f" - Best route plot: {image_path}")
 
 
 if __name__ == "__main__":
