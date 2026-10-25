@@ -2,15 +2,16 @@
 #include <random>
 #include <chrono>
 #include <iomanip>
+#include <algorithm>
 
 std::vector<int> find_greedy(const std::vector<std::vector<int>>& matrix, const std::vector<int>& costs, int start_idx) {
     int n = matrix.size();
     int to_find = (n + 1) / 2; 
     std::vector<int> sol = {start_idx};
+    const double WEIGHT = 0.5;
     
     while (sol.size() < static_cast<size_t>(to_find)) {
-        double best_regret = -1e18;
-        double best_neg_cost = -1e18;
+        double best_score = -1e18;
         int best_node = -1;
         int best_idx = -1;
 
@@ -51,9 +52,10 @@ std::vector<int> find_greedy(const std::vector<std::vector<int>>& matrix, const 
             double second_cost = insertions[1].cost;
             double regret = second_cost - best_cost;
 
-            if (best_node == -1 || regret > best_regret || (std::abs(regret - best_regret) < 1e-9 && -best_cost > best_neg_cost)) {
-                best_regret = regret;
-                best_neg_cost = -best_cost;
+            double score = WEIGHT * regret - (1.0 - WEIGHT) * best_cost;
+
+            if (best_node == -1 || score > best_score) {
+                best_score = score;
                 best_node = node;
                 best_idx = b_idx;
             }
@@ -145,33 +147,18 @@ struct Move {
     int b;
 };
 
-inline void generate_intra_moves(const std::vector<int>& route, const std::string& move_type, std::vector<Move>& moves) {
-    int n = route.size();
+inline void generate_intra_moves(int k_size, const std::string& move_type, std::vector<Move>& moves) {
     if (move_type == "nodes") {
-        for (int i = 0; i < n; ++i) {
-            for (int j = i + 1; j < n; ++j) {
+        for (int i = 0; i < k_size; ++i) {
+            for (int j = i + 1; j < k_size; ++j) {
                 moves.push_back({MoveKind::SWAP, i, j});
             }
         }
     } else if (move_type == "edges") {
-        for (int i = 0; i < n; ++i) {
-            for (int j = i + 2; j < n; ++j) {
-                if (i == 0 && j == n - 1) continue;
+        for (int i = 0; i < k_size; ++i) {
+            for (int j = i + 2; j < k_size; ++j) {
+                if (i == 0 && j == k_size - 1) continue;
                 moves.push_back({MoveKind::REVERSE, i, j});
-            }
-        }
-    }
-}
-
-inline void generate_inter_moves(const std::vector<int>& route, int total_nodes, std::vector<bool>& selected_mask, std::vector<Move>& moves) {
-    std::fill(selected_mask.begin(), selected_mask.end(), false);
-    for (int node : route) selected_mask[node] = true;
-
-    int n = route.size();
-    for (int pos = 0; pos < n; ++pos) {
-        for (int node = 0; node < total_nodes; ++node) {
-            if (!selected_mask[node]) {
-                moves.push_back({MoveKind::REPLACE, pos, node});
             }
         }
     }
@@ -200,32 +187,70 @@ inline void apply_move(std::vector<int>& route, const Move& move) {
     }
 }
 
-std::vector<int> local_search(const std::vector<int>& start_route, const std::vector<std::vector<int>>& matrix, const std::vector<int>& costs, const std::string& move_type, const std::string& strategy, std::mt19937& g) {
+std::vector<int> local_search(
+    const std::vector<int>& start_route, 
+    const std::vector<std::vector<int>>& matrix, 
+    const std::vector<int>& costs, 
+    const std::string& move_type, 
+    const std::string& strategy, 
+    std::mt19937& g
+) {
     std::vector<int> route = start_route;
     int total_nodes = matrix.size();
+    int k_size = route.size();
     const double EPS = 1e-9;
 
-    std::vector<Move> moves;
-    moves.reserve(16000); 
+    std::vector<Move> static_intra_moves;
+    generate_intra_moves(k_size, move_type, static_intra_moves);
+
+    int intra_count = static_intra_moves.size();
+    int inter_count = k_size * (total_nodes - k_size);
+    int total_moves = intra_count + inter_count;
+
     std::vector<bool> selected_mask(total_nodes, false);
+    std::vector<int> unselected_nodes;
+    unselected_nodes.reserve(total_nodes - k_size);
+
+    std::vector<int> move_indices(total_moves);
+    std::iota(move_indices.begin(), move_indices.end(), 0);
+
+    auto get_move_by_index = [&](int idx) -> Move {
+        if (idx < intra_count) {
+            return static_intra_moves[idx];
+        } else {
+            int inter_idx = idx - intra_count;
+            int pos = inter_idx / unselected_nodes.size();
+            int node_idx = inter_idx % unselected_nodes.size();
+            return {MoveKind::REPLACE, pos, unselected_nodes[node_idx]};
+        }
+    };
 
     while (true) {
-        moves.clear();
-        generate_intra_moves(route, move_type, moves);
-        generate_inter_moves(route, total_nodes, selected_mask, moves);
+        std::fill(selected_mask.begin(), selected_mask.end(), false);
+        for (int node : route) selected_mask[node] = true;
+        unselected_nodes.clear();
+        for (int i = 0; i < total_nodes; ++i) {
+            if (!selected_mask[i]) unselected_nodes.push_back(i);
+        }
 
         if (strategy == "greedy") {
-            std::shuffle(moves.begin(), moves.end(), g);
-
             bool improved = false;
-            for (const auto& move : moves) {
+            
+            for (int i = 0; i < total_moves; ++i) {
+                std::uniform_int_distribution<int> dist(i, total_moves - 1);
+                int pick = dist(g);
+                std::swap(move_indices[i], move_indices[pick]);
+
+                Move move = get_move_by_index(move_indices[i]);
                 double delta = delta_for_move(route, move, costs, matrix);
+
                 if (delta < -EPS) {
                     apply_move(route, move);
                     improved = true;
-                    break;
+                    break; 
                 }
             }
+
             if (!improved) return route;
 
         } else if (strategy == "steepest") {
@@ -233,12 +258,24 @@ std::vector<int> local_search(const std::vector<int>& start_route, const std::ve
             double best_delta = -EPS;
             bool found = false;
 
-            for (const auto& move : moves) {
+            for (const auto& move : static_intra_moves) {
                 double delta = delta_for_move(route, move, costs, matrix);
                 if (delta < best_delta) {
                     best_delta = delta;
                     best_move = move;
                     found = true;
+                }
+            }
+
+            for (int pos = 0; pos < k_size; ++pos) {
+                for (int node : unselected_nodes) {
+                    Move move = {MoveKind::REPLACE, pos, node};
+                    double delta = delta_for_move(route, move, costs, matrix);
+                    if (delta < best_delta) {
+                        best_delta = delta;
+                        best_move = move;
+                        found = true;
+                    }
                 }
             }
 
@@ -298,9 +335,11 @@ int main(int argc, char* argv[]) {
         double best_val = 1e18;
         double worst_val = -1e18;
         double total_val = 0;
+        
+        double min_time = 1e18;
+        double max_time = -1e18;
         double total_time = 0;
-        double min_time = 9999999999;
-        double max_time = 0;
+
         std::vector<int> best_route;
 
         for (int run = 0; run < run_count; ++run) {
@@ -319,15 +358,12 @@ int main(int argc, char* argv[]) {
 
             auto end_time = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> duration = end_time - start_time;
+            double dur_sec = duration.count();
 
             total_val += final_val;
-            total_time += duration.count();
-            if(duration.count() > max_time) {
-              max_time = duration.count();
-            }
-            if(duration.count() < min_time) {
-              min_time = duration.count();
-            }
+            total_time += dur_sec;
+            if (dur_sec < min_time) min_time = dur_sec;
+            if (dur_sec > max_time) max_time = dur_sec;
 
             if (final_val < best_val) {
                 best_val = final_val;
@@ -339,11 +375,13 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "Results Summary:\n";
-        std::cout << " - Best Final Value: " << best_val << "\n";
-        std::cout << " - Worst Final Value: " << worst_val << "\n";
-        std::cout << " - Average Final Value: " << (total_val / run_count) << "\n";
-        std::cout << " - Run times: Min: " << min_time << ", Max: " << max_time << ", Average: " << (total_time / run_count) << " seconds\n";
-        std::cout << " - Best Route Found: [";
+        std::cout << "  - Best Final Value (Minimum): " << best_val << "\n";
+        std::cout << "  - Worst Final Value (Maximum): " << worst_val << "\n";
+        std::cout << "  - Average Final Value: " << (total_val / run_count) << "\n";
+        std::cout << "  - Minimum Run Time: " << min_time << " seconds\n";
+        std::cout << "  - Maximum Run Time: " << max_time << " seconds\n";
+        std::cout << "  - Average Run Time: " << (total_time / run_count) << " seconds\n";
+        std::cout << "  - Best Route Found: [";
         for (size_t i = 0; i < best_route.size(); ++i) {
             std::cout << best_route[i] << (i + 1 < best_route.size() ? ", " : "");
         }
