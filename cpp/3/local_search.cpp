@@ -30,10 +30,11 @@ std::vector<int> find_greedy(const std::vector<std::vector<int>>& matrix, const 
 
             for (int idx = 0; idx <= sol_size; ++idx) {
                 double ins_cost = 0;
-                if (idx == 0) {
-                    ins_cost = matrix[node][sol[0]] + costs[node];
-                } else if (idx == sol_size) {
-                    ins_cost = matrix[sol.back()][node] + costs[node];
+                if (idx == 0 || idx == sol_size) {
+                    ins_cost = matrix[sol.back()][node]
+                                + costs[node]
+                                + matrix[node][sol[0]]
+                                - matrix[sol.back()][sol[0]];
                 } else {
                     ins_cost = costs[node] 
                              + matrix[sol[idx - 1]][node] 
@@ -325,7 +326,10 @@ int main(int argc, char* argv[]) {
     int run_count = 200;
 
     for (size_t idx = 0; idx < configurations.size(); ++idx) {
-        auto [strategy, move_type, start_type] = configurations[idx];
+        // auto [strategy, move_type, start_type] = configurations[idx];
+        std::string strategy = std::get<0>(configurations[idx]);
+        std::string move_type = std::get<1>(configurations[idx]);
+        std::string start_type = std::get<2>(configurations[idx]);
 
         std::cout << "Configuration " << (idx + 1) << "/8:\n";
         std::cout << "  Strategy: " << strategy << "\n";
