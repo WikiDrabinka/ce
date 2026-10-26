@@ -24,19 +24,19 @@ instances defined only by distance matrices.
 Algorithm: RunExperiments(matrix, costs, configurations, runs=200)
     For each (strategy, move_type, start_type) in configurations:
         Initialize list of final_values, run_times
-        BestFinalValue ← Infinity
-        BestRoute ← None
+        BestFinalValue <- Infinity
+        BestRoute <- None
 
         For run_idx from 0 to runs - 1:
             If start_type == "random" then
-                start_route ← GetRandomSolution(matrix, K)
+                start_route <- GetRandomSolution(matrix, K)
             Else
-                start_idx ← run_idx mod N
-                start_route ← GetGreedySolution(matrix, costs, start_idx)
+                start_idx <- run_idx mod N
+                start_route <- GetGreedySolution(matrix, costs, start_idx)
             End If
 
-            final_route ← LocalSearch(start_route, matrix, move_type, strategy)
-            final_value ← Objective(final_route, matrix, costs)
+            final_route <- LocalSearch(start_route, matrix, move_type, strategy)
+            final_value <- Objective(final_route, matrix, costs)
 
             Store final_value and RunDuration
         End For
@@ -45,8 +45,8 @@ Algorithm: RunExperiments(matrix, costs, configurations, runs=200)
     End For
 
 Algorithm: Objective(route, matrix, costs)
-    node_cost ← sum(costs[node] for node in route)
-    route_cost ← sum(matrix[route[i]][route[(i + 1) mod len(route)]] for i in range(len(route)))
+    node_cost <- sum(costs[node] for node in route)
+    route_cost <- sum(matrix[route[i]][route[(i + 1) mod len(route)]] for i in range(len(route)))
     Return node_cost + route_cost
 ```
 
@@ -54,19 +54,19 @@ Algorithm: Objective(route, matrix, costs)
 2. Local Search Core
 
 Algorithm: LocalSearch(start_route, matrix, costs, move_type, strategy)
-    route ← Copy(start_route)
+    route <- Copy(start_route)
     
     While True:
         If strategy == "greedy" then
-            moves ← Combine(GetIntraMoves(route, move_type), GetInterMoves(route))
+            moves <- Combine(GetIntraMoves(route, move_type), GetInterMoves(route))
             Shuffle(moves)  
             
-            improved ← False
+            improved <- False
             For each move in moves:
-                delta ← DeltaForMove(route, move, matrix, costs)
+                delta <- DeltaForMove(route, move, matrix, costs)
                 If delta < -EPS then
                     ApplyMove(route, move)
-                    improved ← True
+                    improved <- True
                     Break // Stop at the first improving move
                 End If
             End For
@@ -76,15 +76,15 @@ Algorithm: LocalSearch(start_route, matrix, costs, move_type, strategy)
             End If
 
         Else if strategy == "steepest" then
-            best_move ← None
-            best_delta ← -EPS
+            best_move <- None
+            best_delta <- -EPS
 
             // Evaluate entire neighborhood 
             For each move in Combine(GetIntraMoves(route, move_type), GetInterMoves(route)):
-                delta ← DeltaForMove(route, move, matrix, costs)
+                delta <- DeltaForMove(route, move, matrix, costs)
                 If delta < best_delta then
-                    best_delta ← delta
-                    best_move ← move
+                    best_delta <- delta
+                    best_move <- move
                 End If
             End For
 
@@ -108,20 +108,42 @@ Algorithm: GetIntraMoves(route, move_type)
     End If
 
 Algorithm: GetInterMoves(route)
-    unselected_nodes ← AllNodes \ route
+    unselected_nodes <- AllNodes \ route
     Return { ("replace", pos, node) for each pos in route, node in unselected_nodes }
 
 Algorithm: DeltaForMove(route, move, matrix, costs)
-    Kind, a, b ← move
+    Kind, a, b <- move
     If kind == "swap" then Return SwapDelta(route, a, b, matrix)
     If kind == "reverse" then Return ReverseDelta(route, a, b, matrix)
     If kind == "replace" then
-        prev ← route[(a - 1) mod len(route)]
-        old ← route[a]
-        next ← route[(a + 1) mod len(route)]
+        prev <- route[(a - 1) mod len(route)]
+        old <- route[a]
+        next <- route[(a + 1) mod len(route)]
         Return costs[b] - costs[old]
              + matrix[prev][b] + matrix[b][next]
              - matrix[prev][old] - matrix[old][next]
+
+Algorithm: ReverseDelta(route, i, j, dist):
+    node_prev_i = route[i - 1]
+    node_i      = route[i]
+    node_j      = route[j]
+    node_next_j = route[j + 1]
+    old_cost = dist(node_prev_i, node_i) + dist(node_j, node_next_j)
+    new_cost = dist(node_prev_i, node_j) + dist(node_i, node_next_j)
+    delta = new_cost - old_cost
+    Return delta
+
+Algorithm: SwapDelta(route, i, j, dist):
+    node_i_prev = route[i - 1]
+    node_i      = route[i]
+    node_i_next = route[i + 1]
+    node_j_prev = route[j - 1]
+    node_j      = route[j]
+    node_j_next = route[j + 1]
+    old_cost = dist(node_i_prev, node_i) + dist(node_i, node_i_next) + dist(node_j_prev, node_j) + dist(node_j, node_j_next)
+    new_cost = dist(node_i_prev, node_j) + dist(node_j, node_i_next) + dist(node_j_prev, node_i) + dist(node_i, node_j_next)
+    delta = new_cost - old_cost
+    Return delta
 ```
 
 ## Results
