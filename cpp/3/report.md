@@ -129,20 +129,20 @@ Algorithm: DeltaForMove(route, move, matrix, costs)
 | Method / Run type | Instance A: average (best - worst) | Instance B: average (best - worst) |
 | --- | --- | --- |
 | steepest, nodes, random | 89912.8 (82601 - 98560) | 65898.8 (58765 - 74064) |
-| steepest, nodes, greedy | 72997.2 (71994 - 75688) | 54288.8 (49978 - 61265) |
+| steepest, nodes, greedy | **72997.2** (**71994** - 75688) | 54288.8 (49978 - 61265) |
 | steepest, edges, random | 77422.7 (75020 - 80978) | 53573 (51443 - **56060**) |
-| steepest, edges, greedy | 73023.3 (72009 - 75073) | **53220.6** (49676 - 60362) |
+| steepest, edges, greedy | 73023.3 (72009 - **75073**) | **53220.6** (49676 - 60362) |
 | greedy, nodes, random | 88102.2 (81263 - 95622) | 63668.8 (55856 - 70342) |
 | greedy, nodes, greedy | 73001.6 (71996 - 75688) | 54265.5 (49978 - 61265) |
 | greedy, edges, random | 77395 (74377 - 80103) | 53695.7 (51641 - 56949) |
 | greedy, edges, greedy | 73039.7 (72011 - 75156) | 53300.9 (**49570** - 60547) |
 | Lab 1: Nearest Neighbor | 87476.63 (84362 - 90075) | 59397.33 (56007 - 63166) |
 | Lab 1: Nearest Neighbor (all positions) | 74346.96 (72328 - 77022) | 59475.5 (52915 - 66164) |
-| Lab 1: Greedy Cycle | 73793.4 (72590 - **75281**) | 59649.91 (55655 - 63734) |
+| Lab 1: Greedy Cycle | 73793.4 (72590 - 75281) | 59649.91 (55655 - 63734) |
 | Lab 2: Nearest Neighbor Full Route (2-Regret) | 121360.29 (110950 - 135771) | 73649.84 (68761 - 79756) |
 | Lab 2: Nearest Neighbor Full Route (Weighted) | 75542.49 (72419 - 78504) | 55694.15 (50485 - 61406) |
 | Lab 2: Greedy Cycle (2-Regret) | 120502.05 (111748 - 129972) | 72327.22 (66167 - 77274) |
-| Lab 2: Greedy Cycle (Weighted) | **73339.43** (**72011** - 76027) | 57902.08 (52860 - 63406) |
+| Lab 2: Greedy Cycle (Weighted) | 73339.43 (72011 - 76027) | 57902.08 (52860 - 63406) |
 
 ### Lab 3 Runtime
 
@@ -227,4 +227,10 @@ Algorithm: DeltaForMove(route, move, matrix, costs)
 
 ## Conclusions
 
-I am going to bed
+Local search starting from already good solutions found by greedy methods improves on those solutions.
+
+*All solutions have been verified with the solution checker*
+
+## Source code
+
+[https://github.com/WikiDrabinka/ce/tree/main/cpp/3](https://github.com/WikiDrabinka/ce/tree/main/cpp/3)
