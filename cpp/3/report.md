@@ -20,7 +20,6 @@ instances defined only by distance matrices.
 
 ```
 1. Main Experiment Runner
-Plaintext
 
 Algorithm: RunExperiments(matrix, costs, configurations, runs=200)
     For each (strategy, move_type, start_type) in configurations:
@@ -29,9 +28,6 @@ Algorithm: RunExperiments(matrix, costs, configurations, runs=200)
         BestRoute ← None
 
         For run_idx from 0 to runs - 1:
-            StartTime ← CurrentTime()
-
-            // 1. Generate starting solution
             If start_type == "random" then
                 start_route ← GetRandomSolution(matrix, K)
             Else
@@ -39,21 +35,13 @@ Algorithm: RunExperiments(matrix, costs, configurations, runs=200)
                 start_route ← GetGreedySolution(matrix, costs, start_idx)
             End If
 
-            // 2. Run Local Search
             final_route ← LocalSearch(start_route, matrix, move_type, strategy)
             final_value ← Objective(final_route, matrix, costs)
 
-            RunDuration ← CurrentTime() - StartTime
             Store final_value and RunDuration
-
-            If final_value < BestFinalValue then
-                BestFinalValue ← final_value
-                BestRoute ← final_route
-            End If
-
         End For
 
-        Print score min/max/average, runtime min/max/average, and BestRoute
+        Print score 
     End For
 
 Algorithm: Objective(route, matrix, costs)
@@ -64,16 +52,14 @@ Algorithm: Objective(route, matrix, costs)
 
 ```
 2. Local Search Core
-Plaintext
 
 Algorithm: LocalSearch(start_route, matrix, costs, move_type, strategy)
     route ← Copy(start_route)
     
     While True:
         If strategy == "greedy" then
-            // Generate all intra-route and inter-route moves
             moves ← Combine(GetIntraMoves(route, move_type), GetInterMoves(route))
-            Shuffle(moves)  // Randomized order for greedy search
+            Shuffle(moves)  
             
             improved ← False
             For each move in moves:
@@ -93,7 +79,7 @@ Algorithm: LocalSearch(start_route, matrix, costs, move_type, strategy)
             best_move ← None
             best_delta ← -EPS
 
-            // Evaluate entire neighborhood (both intra and inter-route)
+            // Evaluate entire neighborhood 
             For each move in Combine(GetIntraMoves(route, move_type), GetInterMoves(route)):
                 delta ← DeltaForMove(route, move, matrix, costs)
                 If delta < best_delta then
@@ -113,24 +99,19 @@ Algorithm: LocalSearch(start_route, matrix, costs, move_type, strategy)
 
 ```
 3. Neighborhood & Delta Evaluation
-Plaintext
 
 Algorithm: GetIntraMoves(route, move_type)
     If move_type == "nodes" then
-        // Two-nodes exchange (swap positions i and j)
         Return { ("swap", i, j) for all pairs (i, j) }
     Else if move_type == "edges" then
-        // Two-edges exchange (2-opt reverse segment, excluding adjacent edges)
         Return { ("reverse", i, j) for valid segments [i, j] }
     End If
 
 Algorithm: GetInterMoves(route)
-    // Exchange one selected node with an unselected node
     unselected_nodes ← AllNodes \ route
     Return { ("replace", pos, node) for each pos in route, node in unselected_nodes }
 
 Algorithm: DeltaForMove(route, move, matrix, costs)
-    // Recompute this move's delta from the current route; do not carry deltas across iterations
     Kind, a, b ← move
     If kind == "swap" then Return SwapDelta(route, a, b, matrix)
     If kind == "reverse" then Return ReverseDelta(route, a, b, matrix)
