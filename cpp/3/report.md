@@ -281,7 +281,9 @@ Algorithm: SwapDelta(route, i, j, dist):
 
 ## Conclusions
 
-Local search starting from already good solutions found by greedy methods improves on those solutions.
+- Local search starting from already good solutions found by greedy methods improves on those solutions.
+- Greedy local search is faster than steepest, but performs similarily.
+- Result quality depends majorly on the starting solution.
 
 *All solutions have been verified with the solution checker*
 
