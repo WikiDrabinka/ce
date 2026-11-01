@@ -1,4 +1,4 @@
-#include "../common.h"
+#include "common.h"
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -8,12 +8,14 @@
 #include <cmath>
 #include <climits>
 
+// Structure to represent a move
 struct Move {
-    int type; 
-    int i, j; 
+    int type; // 0: 2-opt (intra-route), 1: node exchange (inter-route)
+    int i, j; // For 2-opt: indices i, j. For exchange: position in solution and unselected node.
     double delta;
 };
 
+// Generate random starting solution of size m = n / 2
 std::vector<int> generate_random_solution(int n, int m, std::mt19937& rng) {
     std::vector<int> all_nodes(n);
     std::iota(all_nodes.begin(), all_nodes.end(), 0);
@@ -22,6 +24,7 @@ std::vector<int> generate_random_solution(int n, int m, std::mt19937& rng) {
     return solution;
 }
 
+// Precompute nearest neighbors (k = 10) taking into account sum of edge length and vertex cost
 std::vector<std::vector<int>> precompute_nearest(const std::vector<std::vector<int>>& matrix, const std::vector<int>& costs, int k) {
     int n = matrix.size();
     std::vector<std::vector<int>> nearest(n);
@@ -43,6 +46,7 @@ std::vector<std::vector<int>> precompute_nearest(const std::vector<std::vector<i
     return nearest;
 }
 
+// Baseline Steepest Local Search (Full Neighborhood Evaluation)
 std::vector<int> baseline_steepest_local_search(
     const std::vector<std::vector<int>>& matrix,
     const std::vector<int>& costs,
@@ -58,6 +62,7 @@ std::vector<int> baseline_steepest_local_search(
         double best_delta = 0.0;
         Move best_move = {-1, -1, -1, 0.0};
         
+        // 1. Evaluate all 2-opt moves (intra-route)
         for (int i = 0; i < m; ++i) {
             for (int j = i + 1; j < m; ++j) {
                 if (j == (i + 1) % m || i == (j + 1) % m) continue;
@@ -78,6 +83,7 @@ std::vector<int> baseline_steepest_local_search(
             }
         }
         
+        // 2. Evaluate all node exchange moves (replace selected node with unselected node)
         std::vector<bool> is_selected(n, false);
         for (int node : solution) is_selected[node] = true;
         
@@ -120,6 +126,7 @@ std::vector<int> baseline_steepest_local_search(
     return solution;
 }
 
+// Candidate-based Steepest Local Search
 std::vector<int> candidate_steepest_local_search(
     const std::vector<std::vector<int>>& matrix,
     const std::vector<int>& costs,
@@ -143,10 +150,12 @@ std::vector<int> candidate_steepest_local_search(
             pos_in_solution[solution[i]] = i;
         }
         
+        // Loop over selected nodes u and their candidate nearest neighbors v
         for (int i = 0; i < m; ++i) {
             int u = solution[i];
             for (int v : nearest[u]) {
                 if (is_selected[v]) {
+                    // Intra-route candidate move (2-opt introducing edge (u, v))
                     int j = pos_in_solution[v];
                     if (i == j || j == (i + 1) % m || i == (j + 1) % m) continue;
                     
@@ -164,6 +173,8 @@ std::vector<int> candidate_steepest_local_search(
                         best_move = {0, std::min(i, j), std::max(i, j), delta};
                     }
                 } else {
+                    // Inter-route candidate move (node exchange introducing edge (u, v))
+                    // 1. Insert v after u (replacing succ(u))
                     int succ_i = (i + 1) % m;
                     int w = solution[succ_i];
                     int next_node = solution[(succ_i + 1) % m];
@@ -177,6 +188,7 @@ std::vector<int> candidate_steepest_local_search(
                         best_move = {1, succ_i, v, delta};
                     }
                     
+                    // 2. Insert v before u (replacing pred(u))
                     int pred_i = (i - 1 + m) % m;
                     int w_pred = solution[pred_i];
                     int prev_w = solution[(pred_i - 1 + m) % m];
@@ -218,6 +230,7 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         filename = argv[1];
     }
+    
     auto data = read_file(filename);
     auto matrix = get_matrix(data);
     auto costs = get_costs(data);
@@ -244,6 +257,7 @@ int main(int argc, char* argv[]) {
     for (int r = 0; r < runs; ++r) {
         auto init_sol = generate_random_solution(n, m, rng);
         
+        // Baseline Steepest Local Search
         auto start_b = std::chrono::high_resolution_clock::now();
         auto sol_b = baseline_steepest_local_search(matrix, costs, init_sol, m);
         auto end_b = std::chrono::high_resolution_clock::now();
@@ -254,6 +268,7 @@ int main(int argc, char* argv[]) {
         baseline_worst_cost = std::max(baseline_worst_cost, cost_b);
         baseline_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_b - start_b).count();
         
+        // Candidate-based Steepest Local Search
         auto start_c = std::chrono::high_resolution_clock::now();
         auto sol_c = candidate_steepest_local_search(matrix, costs, init_sol, m, nearest);
         auto end_c = std::chrono::high_resolution_clock::now();
@@ -264,7 +279,7 @@ int main(int argc, char* argv[]) {
         candidate_worst_cost = std::max(candidate_worst_cost, cost_c);
         candidate_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_c - start_c).count();
     }
-    
+        
     std::cout << "Method 1: Baseline Steepest Local Search\n";
     std::cout << "  Average Cost: " << baseline_total_cost / runs << "\n";
     std::cout << "  Best Cost:    " << baseline_best_cost << "\n";
