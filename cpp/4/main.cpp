@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../common.h"
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -230,6 +230,10 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         filename = argv[1];
     }
+    int k = 10;
+    if (argc > 2) {
+        k = argv[2] ? std::stoi(argv[2]) : 10;
+    }
     
     auto data = read_file(filename);
     auto matrix = get_matrix(data);
@@ -238,7 +242,7 @@ int main(int argc, char* argv[]) {
     int n = data.size();
     int m = n / 2;
     
-    auto nearest = precompute_nearest(matrix, costs, 10);
+    auto nearest = precompute_nearest(matrix, costs, k);
     
     int runs = 200;
     
@@ -251,6 +255,8 @@ int main(int argc, char* argv[]) {
     double candidate_best_cost = 1e9;
     double candidate_worst_cost = -1.0;
     long long candidate_total_time_ms = 0;
+
+    auto best_sol = std::vector<int>();
     
     std::mt19937 rng(42);
     
@@ -275,7 +281,11 @@ int main(int argc, char* argv[]) {
         double cost_c = evaluate(matrix, costs, sol_c);
         
         candidate_total_cost += cost_c;
-        candidate_best_cost = std::min(candidate_best_cost, cost_c);
+        if (cost_c < candidate_best_cost) {
+            candidate_best_cost = cost_c;
+            best_sol = sol_c;
+        }
+        // candidate_best_cost = std::min(candidate_best_cost, cost_c);
         candidate_worst_cost = std::max(candidate_worst_cost, cost_c);
         candidate_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_c - start_c).count();
     }
@@ -286,10 +296,15 @@ int main(int argc, char* argv[]) {
     std::cout << "  Worst Cost:   " << baseline_worst_cost << "\n";
     std::cout << "  Avg Time:     " << (double)baseline_total_time_ms / runs << " ms\n";
     std::cout << "\n";
-    std::cout << "Method 2: Candidate-based Steepest Local Search (k=10)\n";
+    std::cout << "Method 2: Candidate-based Steepest Local Search (k=" << k << ")\n";
     std::cout << "  Average Cost: " << candidate_total_cost / runs << "\n";
     std::cout << "  Best Cost:    " << candidate_best_cost << "\n";
     std::cout << "  Worst Cost:   " << candidate_worst_cost << "\n";
     std::cout << "  Avg Time:     " << (double)candidate_total_time_ms / runs << " ms\n";
+    std::cout << "  Best Solution: [";
+    for (size_t i = 0; i < best_sol.size(); ++i) {
+        std::cout << best_sol[i] << (i + 1 < best_sol.size() ? ", " : "");
+    }
+    std::cout << "]\n";
     return 0;
 }
