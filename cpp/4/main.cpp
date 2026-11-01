@@ -7,6 +7,34 @@
 #include <chrono>
 #include <cmath>
 #include <climits>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+double current_time_ms() {
+#ifdef _WIN32
+    static const double frequency = [] {
+        LARGE_INTEGER value;
+        if (!QueryPerformanceFrequency(&value)) {
+            throw std::runtime_error("QueryPerformanceFrequency failed");
+        }
+        return static_cast<double>(value.QuadPart);
+    }();
+
+    LARGE_INTEGER value;
+    if (!QueryPerformanceCounter(&value)) {
+        throw std::runtime_error("QueryPerformanceCounter failed");
+    }
+    return static_cast<double>(value.QuadPart) * 1000.0 / frequency;
+#else
+    return std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
+#endif
+}
 
 // Structure to represent a move
 struct Move {
@@ -249,12 +277,16 @@ int main(int argc, char* argv[]) {
     double baseline_total_cost = 0.0;
     double baseline_best_cost = 1e9;
     double baseline_worst_cost = -1.0;
-    long long baseline_total_time_ms = 0;
+    double baseline_total_time_ms = 0.0;
+    double baseline_min_time_ms = std::numeric_limits<double>::infinity();
+    double baseline_max_time_ms = 0.0;
     
     double candidate_total_cost = 0.0;
     double candidate_best_cost = 1e9;
     double candidate_worst_cost = -1.0;
-    long long candidate_total_time_ms = 0;
+    double candidate_total_time_ms = 0.0;
+    double candidate_min_time_ms = std::numeric_limits<double>::infinity();
+    double candidate_max_time_ms = 0.0;
 
     auto best_sol = std::vector<int>();
     
@@ -264,20 +296,22 @@ int main(int argc, char* argv[]) {
         auto init_sol = generate_random_solution(n, m, rng);
         
         // Baseline Steepest Local Search
-        auto start_b = std::chrono::high_resolution_clock::now();
+        const double start_b = current_time_ms();
         auto sol_b = baseline_steepest_local_search(matrix, costs, init_sol, m);
-        auto end_b = std::chrono::high_resolution_clock::now();
+        const double baseline_time_ms = current_time_ms() - start_b;
         double cost_b = evaluate(matrix, costs, sol_b);
         
         baseline_total_cost += cost_b;
         baseline_best_cost = std::min(baseline_best_cost, cost_b);
         baseline_worst_cost = std::max(baseline_worst_cost, cost_b);
-        baseline_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_b - start_b).count();
+        baseline_total_time_ms += baseline_time_ms;
+        baseline_min_time_ms = std::min(baseline_min_time_ms, baseline_time_ms);
+        baseline_max_time_ms = std::max(baseline_max_time_ms, baseline_time_ms);
         
         // Candidate-based Steepest Local Search
-        auto start_c = std::chrono::high_resolution_clock::now();
+        const double start_c = current_time_ms();
         auto sol_c = candidate_steepest_local_search(matrix, costs, init_sol, m, nearest);
-        auto end_c = std::chrono::high_resolution_clock::now();
+        const double candidate_time_ms = current_time_ms() - start_c;
         double cost_c = evaluate(matrix, costs, sol_c);
         
         candidate_total_cost += cost_c;
@@ -287,20 +321,26 @@ int main(int argc, char* argv[]) {
         }
         // candidate_best_cost = std::min(candidate_best_cost, cost_c);
         candidate_worst_cost = std::max(candidate_worst_cost, cost_c);
-        candidate_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_c - start_c).count();
+        candidate_total_time_ms += candidate_time_ms;
+        candidate_min_time_ms = std::min(candidate_min_time_ms, candidate_time_ms);
+        candidate_max_time_ms = std::max(candidate_max_time_ms, candidate_time_ms);
     }
         
     std::cout << "Method 1: Baseline Steepest Local Search\n";
     std::cout << "  Average Cost: " << baseline_total_cost / runs << "\n";
     std::cout << "  Best Cost:    " << baseline_best_cost << "\n";
     std::cout << "  Worst Cost:   " << baseline_worst_cost << "\n";
-    std::cout << "  Avg Time:     " << (double)baseline_total_time_ms / runs << " ms\n";
+    std::cout << "  Min Time:     " << baseline_min_time_ms << " ms\n";
+    std::cout << "  Avg Time:     " << baseline_total_time_ms / runs << " ms\n";
+    std::cout << "  Max Time:     " << baseline_max_time_ms << " ms\n";
     std::cout << "\n";
     std::cout << "Method 2: Candidate-based Steepest Local Search (k=" << k << ")\n";
     std::cout << "  Average Cost: " << candidate_total_cost / runs << "\n";
     std::cout << "  Best Cost:    " << candidate_best_cost << "\n";
     std::cout << "  Worst Cost:   " << candidate_worst_cost << "\n";
-    std::cout << "  Avg Time:     " << (double)candidate_total_time_ms / runs << " ms\n";
+    std::cout << "  Min Time:     " << candidate_min_time_ms << " ms\n";
+    std::cout << "  Avg Time:     " << candidate_total_time_ms / runs << " ms\n";
+    std::cout << "  Max Time:     " << candidate_max_time_ms << " ms\n";
     std::cout << "  Best Solution: [";
     for (size_t i = 0; i < best_sol.size(); ++i) {
         std::cout << best_sol[i] << (i + 1 < best_sol.size() ? ", " : "");
