@@ -17,7 +17,119 @@ instances defined only by distance matrices.
 
 ## Algorithm
 
-TO DO
+### Candidate-Based Steepest Local Search
+
+```
+Algorithm: CandidateSteepestLocalSearch(matrix, costs, initial_solution, m, nearest)
+    solution <- Copy(initial_solution)
+    n <- Size(matrix)
+
+    improved <- True
+    While improved do
+        improved <- False
+        best_delta <- 0
+        best_move <- None
+
+        is_selected <- Array(n, False)
+        pos_in_solution <- Array(n, -1)
+
+        // Mark selected nodes and store their positions in the solution
+        For i <- 0 to m - 1 do
+            u <- solution[i]
+            is_selected[u] <- True
+            pos_in_solution[u] <- i
+        End For
+
+        // Explore candidate moves using nearest neighbors
+        For i <- 0 to m - 1 do
+            u <- solution[i]
+
+            For each v in nearest[u] do
+
+                If is_selected[v] then
+                    // Intra-route candidate move (2-opt)
+                    j <- pos_in_solution[v]
+
+                    // Skip identical and adjacent positions
+                    If i == j OR j == (i + 1) mod m OR i == (j + 1) mod m then
+                        Continue
+                    End If
+
+                    u1 <- solution[i]
+                    u2 <- solution[(i + 1) mod m]
+                    v1 <- solution[j]
+                    v2 <- solution[(j + 1) mod m]
+
+                    old_edges <- matrix[u1][u2] + matrix[v1][v2]
+                    new_edges <- matrix[u1][v1] + matrix[u2][v2]
+                    delta <- new_edges - old_edges
+
+                    If delta < best_delta then
+                        best_delta <- delta
+                        best_move <- (0, min(i, j), max(i, j))
+                    End If
+
+                Else
+                    // Inter-route candidate move (node exchange)
+
+                    // 1. Insert v after u (replace successor of u)
+                    succ_i <- (i + 1) mod m
+                    w <- solution[succ_i]
+                    next_node <- solution[(succ_i + 1) mod m]
+
+                    old_cost <- costs[w] + matrix[u][w] + matrix[w][next_node]
+                    new_cost <- costs[v] + matrix[u][v] + matrix[v][next_node]
+                    delta <- new_cost - old_cost
+
+                    If delta < best_delta then
+                        best_delta <- delta
+                        best_move <- (1, succ_i, v)
+                    End If
+
+                    // 2. Insert v before u (replace predecessor of u)
+                    pred_i <- (i - 1 + m) mod m
+                    w_pred <- solution[pred_i]
+                    prev_w <- solution[(pred_i - 1 + m) mod m]
+
+                    old_cost_p <- costs[w_pred] + matrix[prev_w][w_pred] + matrix[w_pred][u]
+                    new_cost_p <- costs[v] + matrix[prev_w][v] + matrix[v][u]
+                    delta_p <- new_cost_p - old_cost_p
+
+                    If delta_p < best_delta then
+                        best_delta <- delta_p
+                        best_move <- (1, pred_i, v)
+                    End If
+                End If
+            End For
+        End For
+
+        // Apply the best improving move found in the neighborhood
+        If best_delta < -EPS then
+            improved <- True
+
+            If best_move.type == 0 then
+                // Apply intra-route 2-opt by reversing the segment
+                i <- best_move.i
+                j <- best_move.j
+
+                left <- (i + 1) mod m
+                right <- j
+
+                While left != right AND left != (right + 1) mod m do
+                    Swap(solution[left], solution[right])
+                    left <- (left + 1) mod m
+                    right <- (right - 1 + m) mod m
+                End While
+
+            Else if best_move.type == 1 then
+                // Apply inter-route move by replacing the selected node
+                solution[best_move.i] <- best_move.j
+            End If
+        End If
+    End While
+
+    Return solution
+```
 
 ## Results
 
@@ -78,7 +190,12 @@ TO DO
 
 ## Conclusions
 
+Using candidate moves with reasonably low k vastly improves the time efficiency of finding solutions, while making a sacrifice on the solution quality. 
+- For instance A, the algorithm didn't find a solution as good as the regular steepest local search for any k<=50. The best and worst solutions for k=100 were the same as for the steepest local search, but the average and min execution times were over 2 times longer and the maximum (~183 ms) was almost 6 times larger.
+- For instance B, using candidate moves actually found a better solution for k=25, which was still 2-3 times faster than steepest local search. Execution times for k=100 followed the same pattern as instance A
+- For both instances, any k<50 ran quicker than steepest local search
 
+The best value of k varies between problem instances, but we found the range of 25-35 to perform the best, while still maintaining faster execution times than steepest local search.
 
 *All solutions have been verified with the solution checker*
 
