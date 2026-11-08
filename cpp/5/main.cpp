@@ -6,6 +6,35 @@
 #include <random>
 #include <chrono>
 #include <cmath>
+#include <climits>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+double current_time_ms() {
+#ifdef _WIN32
+    static const double frequency = [] {
+        LARGE_INTEGER value;
+        if (!QueryPerformanceFrequency(&value)) {
+            throw std::runtime_error("QueryPerformanceFrequency failed");
+        }
+        return static_cast<double>(value.QuadPart);
+    }();
+
+    LARGE_INTEGER value;
+    if (!QueryPerformanceCounter(&value)) {
+        throw std::runtime_error("QueryPerformanceCounter failed");
+    }
+    return static_cast<double>(value.QuadPart) * 1000.0 / frequency;
+#else
+    return std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
+#endif
+}
 
 struct Move {
     int type;      // 0: 2-opt (intra-route), 1: node exchange (inter-route)
@@ -283,11 +312,11 @@ std::vector<int> lm_steepest_local_search(
 
 // Helper function to print a route vector cleanly
 void print_route(const std::vector<int>& route) {
-    std::cout << "[ ";
+    std::cout << "[";
     for (size_t i = 0; i < route.size(); ++i) {
-        std::cout << route[i] << (i + 1 < route.size() ? " -> " : "");
+        std::cout << route[i] << (i + 1 < route.size() ? ", " : "");
     }
-    std::cout << " ]" << std::endl;
+    std::cout << "]" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -319,12 +348,12 @@ int main(int argc, char* argv[]) {
             auto init_sol = generate_random_solution(n, m, rng);
 
             // 1. Baseline Steepest LS
-            auto start_b = std::chrono::high_resolution_clock::now();
+            auto start_b = current_time_ms();
             auto sol_b = baseline_steepest_local_search(matrix, costs, init_sol, m);
-            auto end_b = std::chrono::high_resolution_clock::now();
+            auto end_b = current_time_ms();
             
             double cost_b = evaluate(matrix, costs, sol_b);
-            double time_b = std::chrono::duration<double, std::milli>(end_b - start_b).count();
+            double time_b = end_b - start_b;
 
             baseline_total_cost += cost_b;
             if (cost_b < baseline_best_cost) {
@@ -338,12 +367,12 @@ int main(int argc, char* argv[]) {
             baseline_max_time_ms = std::max(baseline_max_time_ms, time_b);
 
             // 2. LM Steepest LS
-            auto start_lm = std::chrono::high_resolution_clock::now();
+            auto start_lm = current_time_ms();
             auto sol_lm = lm_steepest_local_search(matrix, costs, init_sol, m);
-            auto end_lm = std::chrono::high_resolution_clock::now();
+            auto end_lm = current_time_ms();
             
             double cost_lm = evaluate(matrix, costs, sol_lm);
-            double time_lm = std::chrono::duration<double, std::milli>(end_lm - start_lm).count();
+            double time_lm = end_lm-start_lm;
 
             lm_total_cost += cost_lm;
             if (cost_lm < lm_best_cost) {
