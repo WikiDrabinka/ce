@@ -243,7 +243,7 @@ std::vector<int> lm_steepest_local_search(
                 // Rule 2: Inverted direction -> defer move
                 LM[write_idx++] = mv;
             } else {
-                // Node Exchange Checks: mv.u2 is w (replaced node), mv.v_in is candidate node
+                // Node Exchange Checks
                 int w = mv.u2;
                 int pred = mv.u1;
                 int s_node = mv.v2;
@@ -281,6 +281,15 @@ std::vector<int> lm_steepest_local_search(
     return solution;
 }
 
+// Helper function to print a route vector cleanly
+void print_route(const std::vector<int>& route) {
+    std::cout << "[ ";
+    for (size_t i = 0; i < route.size(); ++i) {
+        std::cout << route[i] << (i + 1 < route.size() ? " -> " : "");
+    }
+    std::cout << " ]" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     std::string filename = "instance.txt";
     if (argc > 1) filename = argv[1];
@@ -294,11 +303,15 @@ int main(int argc, char* argv[]) {
         int m = n / 2;
         int runs = 200;
 
+        // Baseline tracking
         double baseline_total_cost = 0.0, baseline_best_cost = 1e9, baseline_worst_cost = -1.0;
-        long long baseline_total_time_ms = 0;
+        double baseline_min_time_ms = 1e9, baseline_max_time_ms = -1.0, baseline_total_time_ms = 0.0;
+        std::vector<int> baseline_best_route;
 
+        // LM tracking
         double lm_total_cost = 0.0, lm_best_cost = 1e9, lm_worst_cost = -1.0;
-        long long lm_total_time_ms = 0;
+        double lm_min_time_ms = 1e9, lm_max_time_ms = -1.0, lm_total_time_ms = 0.0;
+        std::vector<int> lm_best_route;
 
         std::mt19937 rng(42);
 
@@ -309,36 +322,62 @@ int main(int argc, char* argv[]) {
             auto start_b = std::chrono::high_resolution_clock::now();
             auto sol_b = baseline_steepest_local_search(matrix, costs, init_sol, m);
             auto end_b = std::chrono::high_resolution_clock::now();
+            
             double cost_b = evaluate(matrix, costs, sol_b);
+            double time_b = std::chrono::duration<double, std::milli>(end_b - start_b).count();
 
             baseline_total_cost += cost_b;
-            baseline_best_cost = std::min(baseline_best_cost, cost_b);
+            if (cost_b < baseline_best_cost) {
+                baseline_best_cost = cost_b;
+                baseline_best_route = sol_b;
+            }
             baseline_worst_cost = std::max(baseline_worst_cost, cost_b);
-            baseline_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_b - start_b).count();
+
+            baseline_total_time_ms += time_b;
+            baseline_min_time_ms = std::min(baseline_min_time_ms, time_b);
+            baseline_max_time_ms = std::max(baseline_max_time_ms, time_b);
 
             // 2. LM Steepest LS
             auto start_lm = std::chrono::high_resolution_clock::now();
             auto sol_lm = lm_steepest_local_search(matrix, costs, init_sol, m);
             auto end_lm = std::chrono::high_resolution_clock::now();
+            
             double cost_lm = evaluate(matrix, costs, sol_lm);
+            double time_lm = std::chrono::duration<double, std::milli>(end_lm - start_lm).count();
 
             lm_total_cost += cost_lm;
-            lm_best_cost = std::min(lm_best_cost, cost_lm);
+            if (cost_lm < lm_best_cost) {
+                lm_best_cost = cost_lm;
+                lm_best_route = sol_lm;
+            }
             lm_worst_cost = std::max(lm_worst_cost, cost_lm);
-            lm_total_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(end_lm - start_lm).count();
+
+            lm_total_time_ms += time_lm;
+            lm_min_time_ms = std::min(lm_min_time_ms, time_lm);
+            lm_max_time_ms = std::max(lm_max_time_ms, time_lm);
         }
 
         std::cout << "Method 1: Baseline Steepest Local Search" << std::endl;
         std::cout << "  Average Cost: " << baseline_total_cost / runs << std::endl;
         std::cout << "  Best Cost:    " << baseline_best_cost << std::endl;
         std::cout << "  Worst Cost:   " << baseline_worst_cost << std::endl;
-        std::cout << "  Avg Time:     " << (double)baseline_total_time_ms / runs << " ms" << std::endl;
+        std::cout << "  Min Time:     " << baseline_min_time_ms << " ms" << std::endl;
+        std::cout << "  Max Time:     " << baseline_max_time_ms << " ms" << std::endl;
+        std::cout << "  Avg Time:     " << baseline_total_time_ms / runs << " ms" << std::endl;
+        std::cout << "  Best Route:   ";
+        print_route(baseline_best_route);
+
         std::cout << std::endl;
-        std::cout << "Method 2: Steepest Local Search with LM (Fixed)" << std::endl;
+
+        std::cout << "Method 2: Steepest Local Search with LM" << std::endl;
         std::cout << "  Average Cost: " << lm_total_cost / runs << std::endl;
         std::cout << "  Best Cost:    " << lm_best_cost << std::endl;
         std::cout << "  Worst Cost:   " << lm_worst_cost << std::endl;
-        std::cout << "  Avg Time:     " << (double)lm_total_time_ms / runs << " ms" << std::endl;
+        std::cout << "  Min Time:     " << lm_min_time_ms << " ms" << std::endl;
+        std::cout << "  Max Time:     " << lm_max_time_ms << " ms" << std::endl;
+        std::cout << "  Avg Time:     " << lm_total_time_ms / runs << " ms" << std::endl;
+        std::cout << "  Best Route:   ";
+        print_route(lm_best_route);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
