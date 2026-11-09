@@ -237,7 +237,7 @@ Algorithm: LMSteepestLocalSearch(matrix, costs, initial_solution, m)
 | Method / Run type | Instance A: average (min - max) | Instance B: average (min - max) |
 | --- | --- | --- |
 | Steepest Local Search | 10.332 ms (8.4489 ms - 31.7796 ms) | 9.92681 ms (8.4009 ms - 13.582 ms) |
-| Steepest Local Search with LM  | 2.84608 ms (2.3576 ms - 4.8122 ms) | 2.84705 ms (2.2333 ms - 4.1523 ms) |
+| Steepest Local Search with LM  | **2.84608 ms (2.3576 ms - 4.8122 ms)** | **2.84705 ms (2.2333 ms - 4.1523 ms)** |
 
 ## Instance A
 
@@ -254,7 +254,13 @@ Algorithm: LMSteepestLocalSearch(matrix, costs, initial_solution, m)
 
 ## Conclusions
 
+1. The LM optimization significantly reduced execution time. The average runtime decreased by approximately 72% for both instances, making the optimized algorithm around 3.5 times faster than the standard Steepest Local Search. This confirms that reusing previously evaluated moves effectively reduces redundant neighborhood calculations.
 
+2. Regular Steepest Local Search achieved slightly better results in both instances, but the results were very similar and the difference in performance was much smaller than ones observed in previous labs.
+
+3. Both algorithms showed consistent performance across the tested instances. Their average execution times were similar for Instances A and B. The LM-based approach maintained an average runtime of approximately 2.85 ms, while the standard approach required approximately 10 ms. This indicates that the performance improvement is not specific to a particular instance.
+
+4. Overall, the LM optimization provides a substantial improvement in computational efficiency at the cost of slightly worse solution quality. The average objective value increased by only 0.16% for Instance A and 0.82% for Instance B, while execution time decreased by more than 70%. Therefore, the LM-based approach is a good alternative when runtime is more important than obtaining the best possible solution.
 
 *All solutions have been verified with the solution checker*
 
