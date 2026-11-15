@@ -208,6 +208,13 @@ Algorithm: RunILS(matrix, costs, n, m, max_time_ms)
 | --- | --- | --- |
 | Multiple Start Local Search | 73706.4 (73255 - 74137) | 50278.4 (49565 - 50767) |
 | Iterated Local Search | **71651 (71484 - 72058)** | **48358 (48150 - 48672)** |
+| *Previous labs* |
+| Greedy Cycle Weighted Regret | 73339.4 (72011 - 76027) | 57902.1 (52860 - 63406)
+| Nearest Neighbor Full Route Weighted Regret | 75542.5 (72419 - 78504) | 55694.2 (50485 - 61406) |
+| LS: steepest, nodes, random | 89912.8 (82601 - 98560) | 65898.8 (58765 - 74064) |
+| LS: steepest, nodes, greedy | 72997.2 (71994 - 75688) | 54288.8 (49978 - 61265) |
+| LS: steepest, edges, random | 77422.7 (75020 - 80978) | 53573 (51443 - 56060) |
+| LS: steepest, edges, greedy | 73023.3 (72009 - 75073) | 53220.6 (49676 - 60362) |
 
 ## Runtimes
 
