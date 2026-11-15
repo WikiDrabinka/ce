@@ -10,6 +10,34 @@
 #include <algorithm>
 #include <numeric>
 #include <stdexcept>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+double current_time_ms() {
+#ifdef _WIN32
+    static const double frequency = [] {
+        LARGE_INTEGER value;
+        if (!QueryPerformanceFrequency(&value)) {
+            throw std::runtime_error("QueryPerformanceFrequency failed");
+        }
+        return static_cast<double>(value.QuadPart);
+    }();
+
+    LARGE_INTEGER value;
+    if (!QueryPerformanceCounter(&value)) {
+        throw std::runtime_error("QueryPerformanceCounter failed");
+    }
+    return static_cast<double>(value.QuadPart) * 1000.0 / frequency;
+#else
+    return std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
+#endif
+}
 
 struct NodeData {
     int x;
