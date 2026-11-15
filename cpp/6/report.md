@@ -15,7 +15,44 @@ integer values. The distance matrix should be calculated just after reading an i
 the distance matrix (no nodes coordinates) should be accessed by optimization methods to allow
 instances defined only by distance matrices.
 
-## Algorithm
+## Algorithms
+
+### Multiple Start Local Search
+
+```
+Algorithm: RunMSLS(matrix, costs, n, m, iterations)
+
+    best_solution <- Empty List
+    best_cost <- INFINITY
+
+    // Perform multiple independent random restarts
+    For iter <- 0 to iterations - 1 do
+
+        // Generate a random initial solution
+        init_sol <- GenerateRandomSolution(n, m)
+
+        // Optimize the initial solution using local search
+        local_opt <- LMSteepestLocalSearch(
+            matrix, costs, init_sol, m
+        )
+
+        // Evaluate the optimized solution
+        cost <- Evaluate(matrix, costs, local_opt)
+
+        // Update the global best solution
+        If cost < best_cost then
+            best_cost <- cost
+            best_solution <- local_opt
+        End If
+
+    End For
+
+    Return best_solution
+```
+
+### Perturbation
+
+For the perturbation we used 3 random inter-route moves joined with 3 random intra-route moves.
 
 ```
 Algorithm: Perturb(solution, n, m, k_intra, k_inter)
@@ -86,36 +123,13 @@ Algorithm: Perturb(solution, n, m, k_intra, k_inter)
     Return perturbed
 ```
 
-```
-Algorithm: RunMSLS(matrix, costs, n, m, iterations)
+#### Example perturbation
 
-    best_solution <- Empty List
-    best_cost <- INFINITY
+Original | Perturbed
+--- | ---
+![A](./images/ILS_TSPA.png) | ![A](./images/perturbed.png)
 
-    // Perform multiple independent random restarts
-    For iter <- 0 to iterations - 1 do
-
-        // Generate a random initial solution
-        init_sol <- GenerateRandomSolution(n, m)
-
-        // Optimize the initial solution using local search
-        local_opt <- LMSteepestLocalSearch(
-            matrix, costs, init_sol, m
-        )
-
-        // Evaluate the optimized solution
-        cost <- Evaluate(matrix, costs, local_opt)
-
-        // Update the global best solution
-        If cost < best_cost then
-            best_cost <- cost
-            best_solution <- local_opt
-        End If
-
-    End For
-
-    Return best_solution
-```
+### Iterated Local Search
 
 ```
 Algorithm: RunILS(matrix, costs, n, m, max_time_ms)
