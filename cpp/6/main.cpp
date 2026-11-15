@@ -342,8 +342,8 @@ std::pair<std::vector<int>, int> run_ils(
     double best_cost = current_cost;
     int ls_runs = 1;
 
-    int k_intra = 2; // Perturbation strength (2-opt cuts)
-    int k_inter = 2; // Perturbation strength (node swaps)
+    int k_intra = 4; // Perturbation strength (2-opt cuts)
+    int k_inter = 4; // Perturbation strength (node swaps)
 
     while (true) {
         auto now = current_time_ms();

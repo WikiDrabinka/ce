@@ -17,21 +17,190 @@ instances defined only by distance matrices.
 
 ## Algorithm
 
-TODOㅤ
+```
+Algorithm: Perturb(solution, n, m, k_intra, k_inter)
+
+    perturbed <- Copy(solution)
+
+    // 1. Intra-route perturbation: random 2-opt segment reversals
+    For step <- 0 to k_intra - 1 do
+
+        // Select two random positions
+        i <- RandomInteger(0, m - 1)
+        j <- RandomInteger(0, m - 1)
+
+        // Skip identical or adjacent positions
+        If i == j OR j == (i + 1) mod m OR i == (j + 1) mod m then
+            Continue
+        End If
+
+        // Ensure i < j
+        If i > j then
+            Swap(i, j)
+        End If
+
+        // Reverse the segment between selected positions
+        ReverseSegment(perturbed, (i + 1) mod m, j, m)
+
+    End For
+
+    // 2. Inter-route perturbation: exchange selected nodes
+    // with randomly chosen unselected nodes
+
+    is_selected <- Array(n, False)
+
+    // Mark all currently selected nodes
+    For each node in perturbed do
+        is_selected[node] <- True
+    End For
+
+    unselected <- Empty List
+
+    // Build the pool of unselected nodes
+    For v <- 0 to n - 1 do
+        If NOT is_selected[v] then
+            unselected.Push(v)
+        End If
+    End For
+
+    If unselected is not empty then
+
+        // Randomize the order of unselected nodes
+        Shuffle(unselected)
+
+        // Determine the number of exchanges
+        swaps <- Min(k_inter, m, Size(unselected))
+
+        positions <- [0, 1, ..., m - 1]
+
+        // Randomize positions in the solution
+        Shuffle(positions)
+
+        // Replace randomly selected nodes
+        For s <- 0 to swaps - 1 do
+            perturbed[positions[s]] <- unselected[s]
+        End For
+
+    End If
+
+    Return perturbed
+```
+
+```
+Algorithm: RunMSLS(matrix, costs, n, m, iterations)
+
+    best_solution <- Empty List
+    best_cost <- INFINITY
+
+    // Perform multiple independent random restarts
+    For iter <- 0 to iterations - 1 do
+
+        // Generate a random initial solution
+        init_sol <- GenerateRandomSolution(n, m)
+
+        // Optimize the initial solution using local search
+        local_opt <- LMSteepestLocalSearch(
+            matrix, costs, init_sol, m
+        )
+
+        // Evaluate the optimized solution
+        cost <- Evaluate(matrix, costs, local_opt)
+
+        // Update the global best solution
+        If cost < best_cost then
+            best_cost <- cost
+            best_solution <- local_opt
+        End If
+
+    End For
+
+    Return best_solution
+```
+
+```
+Algorithm: RunILS(matrix, costs, n, m, max_time_ms)
+
+    start_time <- CurrentTimeMilliseconds()
+
+    // 1. Generate and optimize the initial solution
+    init_sol <- GenerateRandomSolution(n, m)
+
+    current_x <- LMSteepestLocalSearch(
+        matrix, costs, init_sol, m
+    )
+
+    current_cost <- Evaluate(matrix, costs, current_x)
+
+    // Initialize the global best solution
+    best_x <- Copy(current_x)
+    best_cost <- current_cost
+
+    // Count the number of local search executions
+    ls_runs <- 1
+
+    // Set perturbation strength
+    k_intra <- 3
+    k_inter <- 3
+
+    // 2. Iterated Local Search loop
+    While True do
+
+        // Check elapsed execution time
+        now <- CurrentTimeMilliseconds()
+        elapsed_ms <- now - start_time
+
+        If elapsed_ms >= max_time_ms then
+            Break
+        End If
+
+        // 3. Perturb the current local optimum
+        y <- Perturb(
+            current_x, n, m, k_intra, k_inter
+        )
+
+        // 4. Apply local search to the perturbed solution
+        y <- LMSteepestLocalSearch(
+            matrix, costs, y, m
+        )
+
+        // Evaluate the new local optimum
+        y_cost <- Evaluate(matrix, costs, y)
+
+        ls_runs <- ls_runs + 1
+
+        // 5. Acceptance criterion:
+        // Accept only strictly better local optima
+        If y_cost < current_cost - EPS then
+
+            current_x <- y
+            current_cost <- y_cost
+
+            // Update the global best solution
+            If current_cost < best_cost - EPS then
+                best_cost <- current_cost
+                best_x <- Copy(current_x)
+            End If
+
+        End If
+
+    End While
+
+    Return (best_x, ls_runs)
+```
 
 ## Results
 
 | Method / Run type | Instance A: average (min - max) | Instance B: average (min - max) |
 | --- | --- | --- |
 | Multiple Start Local Search | 73706.4 (73255 - 74137) | 50278.4 (49565 - 50767) |
-| Iterated Local Search | **71733.8 (71484 - 72301)** | **48451.3 (48154 - 49019)** |
+| Iterated Local Search | **71651 (71484 - 72058)** | **48358 (48150 - 48672)** |
 
 ## Runtimes
 
 | Method / Run type | Instance A: average (min - max) | Instance A: LS runs | Instance B: average (min - max) | Instance B: LS runs |
 | --- | --- | --- | --- | --- |
 | Multiple Start Local Search | 1088.82 ms (1061.69 ms - 1180.21 ms) | *400* | 1092.07 ms (1043.55 ms - 1246.88 ms) | *400* |
-| Iterated Local Search | 1089.09 ms (1088.83 ms - 1089.67 ms)** | 2964.6 (2815 - 3886) | 1092.29 ms (1092.07 ms - 1092.76 ms) | 3335.75 (2928 - 4187) |
+| Iterated Local Search | 1089.09 ms (1088.83 ms - 1089.67 ms)** | 2648.95 (2169 - 3035) | 1092.29 ms (1092.07 ms - 1092.76 ms) | 2433.3 (1210 - 5251) |
 
 ## Instance A
 
@@ -58,7 +227,7 @@ TODOㅤ
 
 ### Iterated Local Search
 
-```[78, 10, 114, 196, 61, 105, 94, 81, 187, 70, 190, 104, 76, 185, 57, 89, 48, 96, 198, 121, 42, 147, 116, 37, 146, 13, 149, 28, 145, 65, 178, 103, 132, 29, 6, 197, 36, 175, 134, 45, 157, 60, 40, 71, 155, 115, 170, 177, 125, 26, 154, 140, 47, 38, 21, 30, 183, 69, 160, 172, 136, 133, 120, 8, 117, 72, 46, 184, 3, 151, 27, 66, 67, 24, 34, 152, 181, 167, 73, 59, 85, 51, 82, 87, 179, 88, 99, 171, 74, 20, 2, 14, 153, 90, 129, 127, 80, 192, 162, 54]```
+```[37, 116, 147, 42, 121, 198, 96, 48, 89, 57, 185, 76, 104, 190, 70, 187, 81, 94, 105, 61, 196, 114, 10, 78, 54, 162, 192, 80, 127, 129, 90, 153, 14, 2, 20, 74, 17, 171, 99, 88, 179, 87, 82, 51, 85, 59, 73, 167, 181, 152, 34, 24, 67, 66, 27, 151, 3, 184, 46, 72, 117, 8, 120, 133, 136, 172, 160, 69, 183, 30, 21, 38, 47, 140, 154, 97, 155, 71, 40, 60, 157, 45, 134, 175, 36, 197, 132, 29, 6, 180, 115, 170, 125, 177, 158, 145, 28, 149, 13, 146]```
 
 ![A](./images/ILS_TSPB.png)
 
