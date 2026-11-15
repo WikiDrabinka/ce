@@ -331,7 +331,7 @@ std::pair<std::vector<int>, int> run_ils(
     double max_time_ms,
     std::mt19937& rng
 ) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = current_time_ms();
 
     // Start with a random solution optimized by local search
     auto init_sol = generate_random_solution(n, m, rng);
@@ -346,8 +346,8 @@ std::pair<std::vector<int>, int> run_ils(
     int k_inter = 2; // Perturbation strength (node swaps)
 
     while (true) {
-        auto now = std::chrono::high_resolution_clock::now();
-        double elapsed_ms = std::chrono::duration<double, std::milli>(now - start_time).count();
+        auto now = current_time_ms();
+        double elapsed_ms = now - start_time;
         if (elapsed_ms >= max_time_ms) {
             break; // Stop when time limit is reached
         }
@@ -379,11 +379,11 @@ std::pair<std::vector<int>, int> run_ils(
  * Helper function to print a route vector cleanly.
  */
 void print_route(const std::vector<int>& route) {
-    std::cout << "[ ";
+    std::cout << "[";
     for (size_t i = 0; i < route.size(); ++i) {
-        std::cout << route[i] << (i + 1 < route.size() ? " -> " : "");
+        std::cout << route[i] << (i + 1 < route.size() ? ", " : "");
     }
-    std::cout << " ]" << std::endl;
+    std::cout << "]" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -411,12 +411,12 @@ int main(int argc, char* argv[]) {
         std::vector<int> msls_best_route;
 
         for (int r = 0; r < experiment_runs; ++r) {
-            auto start = std::chrono::high_resolution_clock::now();
+            auto start = current_time_ms();
             auto sol = run_msls(matrix, costs, n, m, msls_iterations, rng);
-            auto end = std::chrono::high_resolution_clock::now();
+            auto end = current_time_ms();
 
             double cost = evaluate(matrix, costs, sol);
-            double elapsed_ms = std::chrono::duration<double, std::milli>(end - start).count();
+            double elapsed_ms = end - start;
 
             msls_total_cost += cost;
             if (cost < msls_best_cost) {
@@ -442,12 +442,15 @@ int main(int argc, char* argv[]) {
         std::vector<int> ils_best_route;
 
         for (int r = 0; r < experiment_runs; ++r) {
-            auto start = std::chrono::high_resolution_clock::now();
-            auto [sol, ls_runs] = run_ils(matrix, costs, n, m, avg_msls_time_ms, rng);
-            auto end = std::chrono::high_resolution_clock::now();
+            auto start = current_time_ms();
+            auto ils_result = run_ils(matrix, costs, n, m, avg_msls_time_ms, rng);
+            auto sol = ils_result.first;
+            auto ls_runs = ils_result.second;
+            // auto [sol, ls_runs] = run_ils(matrix, costs, n, m, avg_msls_time_ms, rng);
+            auto end = current_time_ms();
 
             double cost = evaluate(matrix, costs, sol);
-            double elapsed_ms = std::chrono::duration<double, std::milli>(end - start).count();
+            double elapsed_ms = end - start;
 
             ils_total_cost += cost;
             if (cost < ils_best_cost) {
