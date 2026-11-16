@@ -52,7 +52,14 @@ Algorithm: RunMSLS(matrix, costs, n, m, iterations)
 
 ### Perturbation
 
-For the perturbation we used 3 random inter-route moves joined with 3 random intra-route moves.
+Our mechanism of perturbation applies 6 random moves (3 intra-route and 3 inter-route) to the solution. Those numbers can be modified to change the strength of perturbation. We have tested values of (2, 2) and (4, 4) but found the results very similar, with (3, 3) finding one slightly better solution for instance B.
+
+#### Example perturbation
+
+Original | Perturbed
+--- | ---
+![A](./images/ILS_TSPA.png) | ![A](./images/perturbed.png)
+
 
 ```
 Algorithm: Perturb(solution, n, m, k_intra, k_inter)
@@ -122,12 +129,6 @@ Algorithm: Perturb(solution, n, m, k_intra, k_inter)
 
     Return perturbed
 ```
-
-#### Example perturbation
-
-Original | Perturbed
---- | ---
-![A](./images/ILS_TSPA.png) | ![A](./images/perturbed.png)
 
 ### Iterated Local Search
 
@@ -254,7 +255,11 @@ Algorithm: RunILS(matrix, costs, n, m, max_time_ms)
 
 ## Conclusions
 
-TODO
+Iterated Local Search performs much better than Multiple Start Local Search and any method we have used in the previous labs.
+
+For both instances, the worst solution found by ILS (72058 and 48672) was still better than the best solution found by MSLS (73255 and 50767).
+
+For instance A, ILS ran local search ~5-8 times more in the same execution time (6 times more on average). For instance B, ILS ran local search ~3-13 times more in the same execution time (6 times more on average). This could indicate that the perturbations are not very big and local search finds the local optimums quickly.
 
 *All solutions have been verified with the solution checker*
 
